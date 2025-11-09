@@ -27,9 +27,14 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
     // PostgreSQL
     runtimeOnly 'org.postgresql:postgresql'
+
+    // Flyway for database migrations
+    implementation 'org.flywaydb:flyway-core'
+//    implementation 'org.flywaydb:flyway-database-postgresql'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
@@ -49,8 +54,12 @@ dependencies {
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
+    // Password encoding
+    implementation 'org.springframework.security:spring-security-crypto'
+
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'com.h2database:h2'
 
     // Dev tools

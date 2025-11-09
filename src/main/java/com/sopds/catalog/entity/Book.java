@@ -54,7 +54,7 @@ public class Book {
     @Column(length = 10)
     private String format;
 
-    @Column(precision = 10, scale = 2)
+    @Column(name = "filesize", precision = 10, scale = 2)
     private BigDecimal filesize; // in MB
 
     private LocalDate publishDate;
