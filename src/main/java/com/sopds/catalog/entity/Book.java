@@ -39,7 +39,7 @@ public class Book {
     @Column(columnDefinition = "TEXT")
     private String annotation;
 
-    @Column(length = 13)
+    @Column(length = 50)
     private String isbn;
 
     @Column(length = 10)

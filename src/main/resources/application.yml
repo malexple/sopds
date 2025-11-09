@@ -63,41 +63,13 @@ server:
 # Application specific configuration
 sopds:
   library:
-    root-path: /path/to/your/books
-    scan-interval: 43200000  # 12 hours in milliseconds
+    root-path: books               # Path to books folder
+    scan-on-startup: true          # Scan on app start
+    scan-cron: "0 0 3 * * ?"      # Daily at 3 AM
     supported-formats: fb2,epub,pdf,djvu,mobi
-
-  opds:
-    title: "My OPDS Catalog"
-    subtitle: "Personal book collection"
-    max-items-per-page: 60
-    split-items-threshold: 300
-
-  cover:
-    enabled: true
-    cache-path: ${java.io.tmpdir}/sopds/covers
-    max-width: 600
-    max-height: 800
+    max-file-size-mb: 100          # Skip files larger than 100MB
+    scan-threads: 4                # Parallel processing threads
 
   zip:
-    enabled: true
-    encoding: cp866
-
-  inpx:
-    enabled: true
-    skip-unchanged: true
-    test-zip: false
-    test-files: false
-
-logging:
-  level:
-    root: INFO
-    com.sopds: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.flywaydb: DEBUG
-  file:
-    name: logs/sopds.log
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    scan-enabled: true             # Scan inside ZIP archives
+    encoding: cp866                # ZIP filename encoding
