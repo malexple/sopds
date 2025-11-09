@@ -1,0 +1,90 @@
+spring:
+  application:
+    name: sopds-catalog
+
+  datasource:
+    url: jdbc:postgresql://localhost:5439/sopds2
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        generate_statistics: false
+    open-in-view: false
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  cache:
+    type: simple
+    cache-names:
+      - books
+      - authors
+      - genres
+      - series
+
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json,application/xml
+
+# Application specific configuration
+sopds:
+  library:
+    root-path: /path/to/your/books
+    scan-interval: 43200000  # 12 hours in milliseconds
+    supported-formats: fb2,epub,pdf,djvu,mobi
+
+  opds:
+    title: "My OPDS Catalog"
+    subtitle: "Personal book collection"
+    max-items-per-page: 60
+    split-items-threshold: 300
+
+  cover:
+    enabled: true
+    cache-path: ${java.io.tmpdir}/sopds/covers
+    max-width: 600
+    max-height: 800
+
+  zip:
+    enabled: true
+    encoding: cp866
+
+  inpx:
+    enabled: true
+    skip-unchanged: true
+    test-zip: false
+    test-files: false
+
+logging:
+  level:
+    root: INFO
+    com.sopds: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  file:
+    name: logs/sopds.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
