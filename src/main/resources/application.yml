@@ -53,6 +53,15 @@ spring:
     user:
       name: admin
       password: admin
+# Swagger/OpenAPI configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
 
 server:
   port: 8080
