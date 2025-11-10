@@ -49,10 +49,6 @@ spring:
       - genres
       - series
 
-  security:
-    user:
-      name: admin
-      password: admin
 # Swagger/OpenAPI configuration
 springdoc:
   api-docs:
