@@ -1,5 +1,7 @@
 # SOPDS на Java
 
+![main.png](.assets/main.png)
+
 ## О проекте
 
 Это моя реимплементация проекта [Simple OPDS Server](https://github.com/malexple/sopds) на Java, вдохновленная оригинальной Python-версией.

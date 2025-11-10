@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="menu">
+    <div id="main_menu">
+        <ul class="menu sopdsmenu" style="font-size:100%;">
+            <li th:classappend="${current == 'catalog'} ? 'active' : ''">
+                <a th:href="@{/web/catalog}">Catalogs</a>
+            </li>
+            <li th:classappend="${current == 'book'} ? 'active' : ''">
+                <a th:href="@{/web/book(lang=0)}">Books</a>
+            </li>
+            <li th:classappend="${current == 'author'} ? 'active' : ''">
+                <a th:href="@{/web/author(lang=0)}">Authors</a>
+            </li>
+            <li th:classappend="${current == 'genre'} ? 'active' : ''">
+                <a th:href="@{/web/genre}">Genres</a>
+            </li>
+            <li th:classappend="${current == 'series'} ? 'active' : ''">
+                <a th:href="@{/web/series(lang=0)}">Series</a>
+            </li>
+        </ul>
+    </div>
+</div>
+</html>

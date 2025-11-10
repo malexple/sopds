@@ -40,6 +40,9 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // Thymeleaf
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
     // XML Processing (for FB2 files)
     implementation 'org.apache.commons:commons-compress:1.25.0'
     implementation 'org.dom4j:dom4j:2.1.4'

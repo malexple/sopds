@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="messages">
+    <div class="callout" th:classappend="${systemMessage.type}" data-closable>
+        <span th:text="${systemMessage.text}">Message text</span>
+        <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+</div>
+</html>

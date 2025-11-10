@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="breadcrumbs">
+    <nav aria-label="You are here:" role="navigation">
+        <ul class="breadcrumbs">
+            <li th:each="b, iter : ${breadcrumbs}" th:text="${b}">Home</li>
+            <li th:each="bc, iter : ${breadcrumbs_cat}">
+                <a th:if="${bc.id != null and bc.id >= 0}"
+                   th:href="@{/web/catalog(cat=${bc.id})}"
+                   th:text="${bc.name}">Catalog</a>
+                <span th:if="${bc.id == null or bc.id < 0}"
+                      th:text="${bc.name}">Current</span>
+            </li>
+        </ul>
+    </nav>
+</div>
+</html>

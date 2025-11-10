@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="top">
+    <div class="top-bar">
+        <div class="top-bar-title">
+            <span data-responsive-toggle="main_menu" data-hide-for="medium">
+                <button class="menu-icon" type="button" data-toggle></button>
+            </span>
+            <div class="title-bar-title">
+                <div class="show-for-small-only">SOPDS</div>
+                <div class="show-for-medium">SIMPLE OPDS CATALOG</div>
+            </div>
+        </div>
+
+        <div class="top-bar-right">
+            <ul class="menu" style="font-size:90%;">
+                <li th:if="${user != null and user.authenticated}">
+                    <a th:href="@{/logout}"><i class="fi-torsos"></i>Logout (<span th:text="${user.username}">user</span>)</a>
+                </li>
+                <li th:if="${user == null or !user.authenticated}">
+                    <a th:href="@{/login}"><i class="fi-torsos"></i>Login</a>
+                </li>
+                <li th:if="${user != null and user.authenticated and user.admin}">
+                    <a th:href="@{/admin}"><i class="fi-widget"></i>Settings</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+</html>

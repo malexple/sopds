@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="books">
+    <div th:each="b : ${books}" class="large-12 column">
+        <div><b th:text="${b.title}">Book Title</b></div>
+        <div class="large-12 column">
+            <table>
+                <tr>
+                    <td rowspan="6" width="130px" style="padding:0rem 0rem;">
+                        <a th:href="@{/opds/cover/{id}(id=${b.id})}" target="_blank">
+                            <img th:src="@{/opds/thumb/{id}(id=${b.id})}" alt=""
+                                 style="width: 37rem;max-width: 100%;height: auto;vertical-align: middle;border-style: none;">
+                        </a>
+                    </td>
+                    <td rowspan="6" style="font-size:100%; padding:1rem 1rem;">
+                        Book title: <b th:text="${b.title}">Title</b><br>
+                        <span th:if="${b.authors.size() > 0}">
+                            Authors: <b>
+                                <span th:each="a,iter : ${b.authors}">
+                                    <a th:href="@{/web/searchbooks?searchtype=a&searchterms={id}(id=${a.id})}" th:text="${a.fullName}">Author</a>
+                                    <span th:if="${!iter.last}">,</span>
+                                </span>
+                            </b><br>
+                        </span>
+                        <span th:if="${b.genres.size() > 0}">
+                            Genres: <b>
+                                <span th:each="g,iter : ${b.genres}">
+                                    <a th:href="@{/web/searchbooks?searchtype=g&searchterms={id}(id=${g.id})}" th:text="${g.nameRu}">Genre</a>
+                                    <span th:if="${!iter.last}">,</span>
+                                </span>
+                            </b><br>
+                        </span>
+                        File: <b th:text="${b.path} + '/' + ${b.filename}">path/filename</b><br>
+                        File size: <b th:text="${b.filesize} + ' MB'">0 MB</b><br>
+                        Language: <b th:text="${b.lang}">lang</b><br>
+                    </td>
+                    <td width="140px">
+                        <a th:href="@{'https://omnireader.ru/#/reader?url=https://' + ${#httpServletRequest.serverName} + '/opds/download/' + ${b.id} + '/0'}" target="_blank">
+                            <b><u>Read online</u></b>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td><b>Download:</b></td>
+                </tr>
+                <tr>
+                    <td><a th:href="@{/opds/download/{id}/0(id=${b.id})}"><b><u th:text="${b.format}">format</u></b></a></td>
+                </tr>
+                <tr>
+                    <td><a th:href="@{/opds/download/{id}/1(id=${b.id})}"><b><u th:text="|${b.format}+zip|">format+zip</u></b></a></td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <p style="font-size:90%;" th:text="${b.annotation}">Annotation</p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+</html>

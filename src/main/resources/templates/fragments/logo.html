@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="logo">
+    <div class="show-for-medium medium-4 large-2 column" style="padding:0;">
+        <a id="HomeLink" th:href="@{/}"><img th:src="@{/images/Mejnkun.jpeg}"></a>
+    </div>
+    <div class="small-12 medium-8 large-10 column" style="padding:0;">
+        <form method="get" th:action="@{/web/searchbooks}" id="searchform" data-abide>
+            <div class="input-group">
+                <input class="input-group-field" type="search" name="searchterms" placeholder="" id="main_searchbox" data-validator="check_search" required>
+                <div class="input-group-button">
+                    <button class="button" type="submit" data-close="search-dropdown" name="submit">Search</button>
+                </div>
+                <div class="input-group-button">
+                    <a class="dropdown button arrow-only float-right" data-toggle="search-dropdown"></a>
+                </div>
+                <input type="hidden" name="page" value="0">
+            </div>
+
+            <div class="dropdown-pane bottom" id="search-dropdown" data-dropdown>
+                <div class="row">
+                    <fieldset class="large-12 columns">
+                        <legend>Choose Search Type:</legend>
+                        <input type="radio" name="searchtype" value="m" id="title" onclick="SetSearch()" checked>
+                        <label for="title">Title</label>
+                        <input type="radio" name="searchtype" value="m" id="author" onclick="SetSearch()">
+                        <label for="author">Author</label>
+                        <input type="radio" name="searchtype" value="m" id="series" onclick="SetSearch()">
+                        <label for="series">Series</label>
+                    </fieldset>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="show-for-medium" align="center">Life should be filled with books that are filled with life.</div>
+</div>
+</html>

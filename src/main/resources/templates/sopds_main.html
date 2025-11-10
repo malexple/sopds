@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="shortcut icon" type="image/icon" th:href="@{/images/favicon.ico}"/>
+    <title th:text="${appTitle} + ${breadcrumbs != null && !breadcrumbs.empty ? ' / ' + breadcrumbs[0] : ''}">SOPDS Catalog</title>
+    <link rel="stylesheet" type="text/css" th:href="@{/css/sopds.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/foundation-icons/foundation-icons.css}">
+</head>
+
+<body>
+<div class="row"><div class="large-12 column">
+    <div th:replace="fragments/top :: top"></div>
+</div></div>
+
+<div class="row"><div class="large-12 column">
+    <div th:replace="fragments/logo :: logo"></div>
+</div></div>
+
+<div class="row"><div class="large-12 column">
+    <div th:replace="fragments/menu :: menu"></div>
+</div></div>
+
+<div class="row"><div class="large-12 column">
+    <div th:replace="fragments/breadcrumbs :: breadcrumbs"></div>
+</div></div>
+
+<div th:if="${systemMessage != null}" class="row">
+    <div class="large-12 column">
+        <div th:replace="fragments/messages :: messages"></div>
+    </div>
+</div>
+
+<div th:if="${user == null or !user.authenticated}" class="row">
+    <div class="large-12 column">
+        <!-- Login form will be here -->
+    </div>
+</div>
+
+<div class="row"><div class="large-12 column">
+    <div th:if="${content != null}">
+        <div th:replace="${content}"></div>
+    </div>
+    <div th:if="${content == null}">
+        <!-- Default content -->
+        <div th:replace="sopds_hello :: hello"></div>
+    </div>
+</div></div>
+
+<div class="row"><div class="large-12 column">
+    <div th:replace="fragments/footer :: footer"></div>
+</div></div>
+
+<script th:src="@{/js/vendor/jquery.js}"></script>
+<script th:src="@{/js/vendor/foundation.min.js}"></script>
+
+<script>
+    $(document).foundation();
+
+    function SetSearch() {
+        var searchtype = $("input[name='searchtype']:radio:checked").attr("id");
+        var searchBox = document.getElementsByName('searchterms')[0];
+        if (searchBox) {
+            searchBox.placeholder = "Выберите тип поиска рядом с кнопкой 'Найти'";
+            if (searchtype == "title") {
+                searchBox.placeholder = "Поиск по названию книги";
+                $('#searchform').attr("action", "/web/searchbooks");
+            }
+            if (searchtype == "author") {
+                searchBox.placeholder = "Поиск по Ф.И.О. автора";
+                $('#searchform').attr("action", "/web/searchauthors");
+            }
+            if (searchtype == "series") {
+                searchBox.placeholder = "Поиск по серии";
+                $('#searchform').attr("action", "/web/searchseries");
+            }
+            $('#search-dropdown').foundation('close');
+        }
+    }
+
+    // Initialize search on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        SetSearch();
+    });
+
+    Foundation.Abide.defaults.validators['check_search'] =
+        function($el,required,parent) {
+            if ($('#main_searchbox')[0].value.length < 3)
+                return false;
+            return true;
+        };
+
+    function logout(to_url) {
+        var out = window.location.href.replace(/:\/\//, '://log:out@');
+
+        jQuery.get(out).error(function() {
+            window.location = to_url;
+        });
+    }
+</script>
+</body>
+</html>
