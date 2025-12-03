@@ -1,109 +1,152 @@
--- GENRE
-CREATE TABLE genre (
+-- Author
+CREATE TABLE opds_catalog_author (
     id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    code VARCHAR(50) UNIQUE,
-    parent_id BIGINT REFERENCES genre(id) ON DELETE SET NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    full_name VARCHAR(128) NOT NULL,
+    search_full_name VARCHAR(128) NOT NULL,
+    lang_code INTEGER NOT NULL DEFAULT 9
 );
 
-CREATE INDEX idx_genre_name ON genre(name);
-CREATE INDEX idx_genre_parent_id ON genre(parent_id);
+CREATE INDEX idx_author_full_name ON opds_catalog_author(full_name);
+CREATE INDEX idx_author_search_full_name ON opds_catalog_author(search_full_name);
+CREATE INDEX idx_author_lang_code ON opds_catalog_author(lang_code);
 
--- AUTHOR
-CREATE TABLE author (
+-- Genre
+CREATE TABLE opds_catalog_genre (
     id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    sort_name VARCHAR(255),
-    lang VARCHAR(10),
-    biography TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    genre VARCHAR(32) NOT NULL,
+    section VARCHAR(64) NOT NULL,
+    subsection VARCHAR(100) NOT NULL
 );
 
-CREATE INDEX idx_author_name ON author(name);
+CREATE INDEX idx_genre_genre ON opds_catalog_genre(genre);
+CREATE INDEX idx_genre_section ON opds_catalog_genre(section);
+CREATE INDEX idx_genre_subsection ON opds_catalog_genre(subsection);
 
--- BOOK
-CREATE TABLE book (
+-- Series
+CREATE TABLE opds_catalog_series (
     id BIGSERIAL PRIMARY KEY,
-    title VARCHAR(500) NOT NULL,
-    annotation TEXT,
-    language VARCHAR(10),
-    pub_date VARCHAR(50),
-    file_hash VARCHAR(64) UNIQUE,
-    available BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    ser VARCHAR(80) NOT NULL,
+    search_ser VARCHAR(80) NOT NULL,
+    lang_code INTEGER NOT NULL DEFAULT 9
 );
 
-CREATE INDEX idx_book_title ON book(title);
-CREATE INDEX idx_book_available ON book(available);
+CREATE INDEX idx_series_ser ON opds_catalog_series(ser);
+CREATE INDEX idx_series_search_ser ON opds_catalog_series(search_ser);
+CREATE INDEX idx_series_lang_code ON opds_catalog_series(lang_code);
 
--- BOOK_AUTHOR
-CREATE TABLE book_author (
-    book_id BIGINT NOT NULL REFERENCES book(id) ON DELETE CASCADE,
-    author_id BIGINT NOT NULL REFERENCES author(id) ON DELETE CASCADE,
-    PRIMARY KEY (book_id, author_id)
-);
-
--- BOOK_GENRE
-CREATE TABLE book_genre (
-    book_id BIGINT NOT NULL REFERENCES book(id) ON DELETE CASCADE,
-    genre_id BIGINT NOT NULL REFERENCES genre(id) ON DELETE CASCADE,
-    PRIMARY KEY (book_id, genre_id)
-);
-
--- BOOK_FILE
-CREATE TABLE book_file (
+-- Catalog
+CREATE TABLE opds_catalog_catalog (
     id BIGSERIAL PRIMARY KEY,
-    book_id BIGINT NOT NULL REFERENCES book(id) ON DELETE CASCADE,
+    cat_name VARCHAR(128) NOT NULL,
     path VARCHAR(1000) NOT NULL,
-    file_type VARCHAR(10),
-    size BIGINT NOT NULL,
-    hash VARCHAR(64),
-    in_archive BOOLEAN NOT NULL DEFAULT FALSE,
-    archive_path VARCHAR(1000),
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    cat_type INTEGER NOT NULL DEFAULT 0,
+    cat_size INTEGER DEFAULT 0,
+    parent_id BIGINT REFERENCES opds_catalog_catalog(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_book_file_book_id ON book_file(book_id);
+CREATE INDEX idx_catalog_cat_name ON opds_catalog_catalog(cat_name);
+CREATE INDEX idx_catalog_path ON opds_catalog_catalog(path);
 
--- USERS
-CREATE TABLE users (
+-- Book
+CREATE TABLE opds_catalog_book (
     id BIGSERIAL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    telegram_id BIGINT UNIQUE,
-    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    filename VARCHAR(256) NOT NULL,
+    path VARCHAR(1000) NOT NULL,
+    filesize INTEGER NOT NULL DEFAULT 0,
+    format VARCHAR(8) NOT NULL,
+    cat_type INTEGER NOT NULL DEFAULT 0,
+    registerdate TIMESTAMP NOT NULL DEFAULT NOW(),
+    docdate VARCHAR(32),
+    lang VARCHAR(16),
+    title VARCHAR(256) NOT NULL,
+    search_title VARCHAR(256) NOT NULL,
+    annotation VARCHAR(10000),
+    lang_code INTEGER NOT NULL DEFAULT 9,
+    avail INTEGER NOT NULL DEFAULT 0,
+    catalog_id BIGINT NOT NULL REFERENCES opds_catalog_catalog(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_book_filename ON opds_catalog_book(filename);
+CREATE INDEX idx_book_path ON opds_catalog_book(path);
+CREATE INDEX idx_book_filesize ON opds_catalog_book(filesize);
+CREATE INDEX idx_book_format ON opds_catalog_book(format);
+CREATE INDEX idx_book_registerdate ON opds_catalog_book(registerdate);
+CREATE INDEX idx_book_title ON opds_catalog_book(title);
+CREATE INDEX idx_book_search_title ON opds_catalog_book(search_title);
+CREATE INDEX idx_book_lang_code ON opds_catalog_book(lang_code);
+CREATE INDEX idx_book_avail ON opds_catalog_book(avail);
+
+-- Book-Author (Many-to-Many)
+CREATE TABLE opds_catalog_bauthor (
+    id BIGSERIAL PRIMARY KEY,
+    book_id BIGINT NOT NULL REFERENCES opds_catalog_book(id) ON DELETE CASCADE,
+    author_id BIGINT NOT NULL REFERENCES opds_catalog_author(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_bauthor_book_id ON opds_catalog_bauthor(book_id);
+CREATE INDEX idx_bauthor_author_id ON opds_catalog_bauthor(author_id);
+
+-- Book-Genre (Many-to-Many)
+CREATE TABLE opds_catalog_bgenre (
+    id BIGSERIAL PRIMARY KEY,
+    book_id BIGINT NOT NULL REFERENCES opds_catalog_book(id) ON DELETE CASCADE,
+    genre_id BIGINT NOT NULL REFERENCES opds_catalog_genre(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_bgenre_book_id ON opds_catalog_bgenre(book_id);
+CREATE INDEX idx_bgenre_genre_id ON opds_catalog_bgenre(genre_id);
+
+-- Book-Series (Many-to-Many with ser_no)
+CREATE TABLE opds_catalog_bseries (
+    id BIGSERIAL PRIMARY KEY,
+    ser_no INTEGER NOT NULL DEFAULT 0,
+    book_id BIGINT NOT NULL REFERENCES opds_catalog_book(id) ON DELETE CASCADE,
+    ser_id BIGINT NOT NULL REFERENCES opds_catalog_series(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_bseries_book_id ON opds_catalog_bseries(book_id);
+CREATE INDEX idx_bseries_ser_id ON opds_catalog_bseries(ser_id);
+
+-- Bookshelf
+CREATE TABLE opds_catalog_bookshelf (
+    id BIGSERIAL PRIMARY KEY,
+    readtime TIMESTAMP NOT NULL DEFAULT NOW(),
+    book_id BIGINT NOT NULL REFERENCES opds_catalog_book(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL
+);
+
+CREATE INDEX idx_bookshelf_user_id ON opds_catalog_bookshelf(user_id);
+CREATE INDEX idx_bookshelf_book_id ON opds_catalog_bookshelf(book_id);
+
+-- Counter
+CREATE TABLE opds_catalog_counter (
+    name VARCHAR(16) PRIMARY KEY,
+    value INTEGER NOT NULL DEFAULT 0,
+    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Auth User (Django compatible)
+CREATE TABLE auth_user (
+    id BIGSERIAL PRIMARY KEY,
+    password VARCHAR(128) NOT NULL,
+    last_login TIMESTAMP,
+    is_superuser BOOLEAN NOT NULL DEFAULT FALSE,
+    username VARCHAR(150) NOT NULL UNIQUE,
+    first_name VARCHAR(150) DEFAULT '',
+    last_name VARCHAR(150) DEFAULT '',
+    email VARCHAR(254) DEFAULT '',
+    is_staff BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    date_joined TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- APP_SETTINGS
-CREATE TABLE app_settings (
+CREATE INDEX idx_auth_user_username ON auth_user(username);
+
+-- Constance Config (Django settings)
+CREATE TABLE constance_config (
     id BIGSERIAL PRIMARY KEY,
-    setting_key VARCHAR(255) NOT NULL UNIQUE,
-    setting_value TEXT,
-    setting_type VARCHAR(50),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    key VARCHAR(255) NOT NULL UNIQUE,
+    value TEXT
 );
 
--- SCAN_HISTORY
-CREATE TABLE scan_history (
-    id BIGSERIAL PRIMARY KEY,
-    scan_date TIMESTAMP NOT NULL DEFAULT NOW(),
-    books_added INT NOT NULL DEFAULT 0,
-    books_updated INT NOT NULL DEFAULT 0,
-    books_deleted INT NOT NULL DEFAULT 0,
-    duration_ms BIGINT,
-    status VARCHAR(50),
-    error_message TEXT
-);
-
--- COVER_CACHE
-CREATE TABLE cover_cache (
-    id BIGSERIAL PRIMARY KEY,
-    book_id BIGINT NOT NULL UNIQUE,
-    image_data BYTEA,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
+CREATE INDEX idx_constance_config_key ON constance_config(key);

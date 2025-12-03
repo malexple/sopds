@@ -1,7 +1,7 @@
 package com.sopds.service;
 
-import com.sopds.domain.AppSettings;
-import com.sopds.repository.AppSettingsRepository;
+import com.sopds.domain.ConstanceConfig;
+import com.sopds.repository.ConstanceConfigRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,60 +15,46 @@ import java.util.List;
 @Slf4j
 public class ConfigService {
 
-    private final AppSettingsRepository settingsRepository;
+    private final ConstanceConfigRepository configRepository;
 
     @Transactional(readOnly = true)
     public String getString(String key, String defaultValue) {
-        return settingsRepository.findByKey(key)
-                .map(AppSettings::getStringValue)
+        return configRepository.findByKey(key)
+                .map(ConstanceConfig::getValue)
                 .orElse(defaultValue);
     }
 
     @Transactional(readOnly = true)
     public Integer getInt(String key, Integer defaultValue) {
-        return settingsRepository.findByKey(key)
-                .map(AppSettings::getIntValue)
+        return configRepository.findByKey(key)
+                .map(c -> Integer.parseInt(c.getValue()))
                 .orElse(defaultValue);
     }
 
     @Transactional(readOnly = true)
     public Boolean getBoolean(String key, Boolean defaultValue) {
-        return settingsRepository.findByKey(key)
-                .map(AppSettings::getBooleanValue)
+        return configRepository.findByKey(key)
+                .map(c -> Boolean.parseBoolean(c.getValue()))
                 .orElse(defaultValue);
     }
 
     public void setString(String key, String value) {
         log.info("Setting config: {}={}", key, value);
-        saveOrUpdate(key, value, "STRING");
-    }
 
-    public void setInt(String key, Integer value) {
-        log.info("Setting config: {}={}", key, value);
-        saveOrUpdate(key, value != null ? value.toString() : null, "INT");
-    }
+        ConstanceConfig config = configRepository.findByKey(key)
+                .orElse(ConstanceConfig.builder().key(key).build());
 
-    public void setBoolean(String key, Boolean value) {
-        log.info("Setting config: {}={}", key, value);
-        saveOrUpdate(key, value != null ? value.toString() : null, "BOOLEAN");
-    }
-
-    private void saveOrUpdate(String key, String value, String type) {
-        AppSettings settings = settingsRepository.findByKey(key)
-                .orElse(AppSettings.builder().key(key).build());
-
-        settings.setValue(value);
-        settings.setType(type);
-        settingsRepository.save(settings);
+        config.setValue(value);
+        configRepository.save(config);
     }
 
     @Transactional(readOnly = true)
-    public List<AppSettings> getAll() {
-        return settingsRepository.findAll();
+    public List<ConstanceConfig> getAll() {
+        return configRepository.findAll();
     }
 
     public void delete(String key) {
         log.info("Deleting config: {}", key);
-        settingsRepository.deleteByKey(key);
+        configRepository.deleteByKey(key);
     }
 }

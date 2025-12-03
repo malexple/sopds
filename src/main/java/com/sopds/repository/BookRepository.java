@@ -14,31 +14,40 @@ import java.util.Optional;
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
 
-    Optional<Book> findByFileHash(String fileHash);
+    Optional<Book> findByFilename(String filename);
 
-    @Query("SELECT b FROM Book b WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :query, '%')) AND b.available = true")
+    Optional<Book> findByPath(String path);
+
+    @Query("SELECT b FROM Book b WHERE LOWER(b.searchTitle) LIKE LOWER(CONCAT('%', :query, '%')) AND b.avail = 2")
     Page<Book> searchByTitle(@Param("query") String query, Pageable pageable);
 
-    @Query("SELECT b FROM Book b JOIN b.genres g WHERE g.id = :genreId AND b.available = true ORDER BY b.title")
+    @Query("SELECT b FROM Book b JOIN b.genres g WHERE g.id = :genreId AND b.avail = 2 ORDER BY b.title")
     Page<Book> findByGenreId(@Param("genreId") Long genreId, Pageable pageable);
 
-    @Query("SELECT b FROM Book b JOIN b.authors a WHERE a.id = :authorId AND b.available = true ORDER BY b.title")
+    @Query("SELECT b FROM Book b JOIN b.authors a WHERE a.id = :authorId AND b.avail = 2 ORDER BY b.title")
     Page<Book> findByAuthorId(@Param("authorId") Long authorId, Pageable pageable);
 
-    @Query("SELECT b FROM Book b WHERE b.available = true ORDER BY b.createdAt DESC")
+    @Query("SELECT b FROM Book b JOIN b.series s WHERE s.id = :seriesId AND b.avail = 2 ORDER BY b.title")
+    Page<Book> findBySeriesId(@Param("seriesId") Long seriesId, Pageable pageable);
+
+    @Query("SELECT b FROM Book b WHERE b.avail = 2 ORDER BY b.registerdate DESC")
     Page<Book> findRecentBooks(Pageable pageable);
 
-    @Query("SELECT b FROM Book b WHERE b.language = :lang AND b.available = true ORDER BY b.title")
-    Page<Book> findByLanguage(@Param("lang") String lang, Pageable pageable);
+    @Query("SELECT b FROM Book b WHERE b.catalog.id = :catalogId AND b.avail = 2 ORDER BY b.title")
+    Page<Book> findByCatalogId(@Param("catalogId") Long catalogId, Pageable pageable);
 
-    long countByAvailableTrue();
+    @Query("SELECT b FROM Book b WHERE b.langCode = :langCode AND b.avail = 2 ORDER BY b.title")
+    Page<Book> findByLangCode(@Param("langCode") Integer langCode, Pageable pageable);
+
+    @Query("SELECT COUNT(b) FROM Book b WHERE b.avail = 2")
+    long countAvailable();
 
     @Query("""
         SELECT DISTINCT b FROM Book b
         LEFT JOIN b.authors a
-        WHERE b.available = true
-        AND (LOWER(b.title) LIKE LOWER(CONCAT('%', :query, '%'))
-             OR LOWER(a.name) LIKE LOWER(CONCAT('%', :query, '%')))
+        WHERE b.avail = 2
+        AND (LOWER(b.searchTitle) LIKE LOWER(CONCAT('%', :query, '%'))
+             OR LOWER(a.searchFullName) LIKE LOWER(CONCAT('%', :query, '%')))
         """)
     Page<Book> search(@Param("query") String query, Pageable pageable);
 }

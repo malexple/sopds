@@ -1,15 +1,15 @@
 package com.sopds.repository;
 
-import com.sopds.domain.AppSettings;
+import com.sopds.domain.ConstanceConfig;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface AppSettingsRepository extends JpaRepository<AppSettings, Long> {
+public interface ConstanceConfigRepository extends JpaRepository<ConstanceConfig, Long> {
 
-    Optional<AppSettings> findByKey(String key);
+    Optional<ConstanceConfig> findByKey(String key);
 
     boolean existsByKey(String key);
 

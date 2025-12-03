@@ -19,65 +19,64 @@ public class GenreService {
     private final GenreRepository genreRepository;
 
     @Transactional(readOnly = true)
-    public List<Genre> getTopLevelGenres() {
-        log.debug("Fetching top-level genres");
-        return genreRepository.findTopLevelGenres();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Genre> getChildGenres(Long parentId) {
-        log.debug("Fetching child genres for parent ID: {}", parentId);
-        return genreRepository.findByParentId(parentId);
-    }
-
-    @Transactional(readOnly = true)
     public Optional<Genre> getById(Long id) {
         return genreRepository.findById(id);
     }
 
     @Transactional(readOnly = true)
-    public Optional<Genre> getByCode(String code) {
-        return genreRepository.findByCode(code);
+    public Optional<Genre> getByGenre(String genre) {
+        return genreRepository.findByGenre(genre);
     }
 
-    public Genre create(String name, String code, Long parentId) {
-        log.info("Creating genre: name={}, code={}", name, code);
-
-        if (genreRepository.existsByCode(code)) {
-            throw new IllegalArgumentException("Genre with code '" + code + "' already exists");
-        }
-
-        Genre parent = parentId != null ? genreRepository.findById(parentId).orElse(null) : null;
-
-        Genre genre = Genre.builder()
-                .name(name)
-                .code(code)
-                .parent(parent)
-                .build();
-
-        return genreRepository.save(genre);
+    @Transactional(readOnly = true)
+    public List<String> getAllSections() {
+        return genreRepository.findAllSections();
     }
 
-    public Genre update(Long id, String name, String code) {
-        log.info("Updating genre ID: {}", id);
-
-        Genre genre = genreRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Genre not found: " + id));
-
-        if (name != null) genre.setName(name);
-        if (code != null) genre.setCode(code);
-
-        return genreRepository.save(genre);
+    @Transactional(readOnly = true)
+    public List<Genre> getBySection(String section) {
+        return genreRepository.findBySection(section);
     }
 
-    public void delete(Long id) {
-        log.info("Deleting genre ID: {}", id);
-        genreRepository.deleteById(id);
+    @Transactional(readOnly = true)
+    public List<Genre> getByBookId(Long bookId) {
+        return genreRepository.findByBookId(bookId);
     }
 
     @Transactional(readOnly = true)
     public List<Genre> getAll() {
         return genreRepository.findAll();
+    }
+
+    public Genre getOrCreate(String genre, String section, String subsection) {
+        return genreRepository.findByGenre(genre)
+                .orElseGet(() -> {
+                    log.info("Creating genre: {}", genre);
+                    Genre newGenre = Genre.builder()
+                            .genre(genre)
+                            .section(section != null ? section : "")
+                            .subsection(subsection != null ? subsection : "")
+                            .build();
+                    return genreRepository.save(newGenre);
+                });
+    }
+
+    public Genre update(Long id, String genre, String section, String subsection) {
+        log.info("Updating genre ID: {}", id);
+
+        Genre entity = genreRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Genre not found: " + id));
+
+        if (genre != null) entity.setGenre(genre);
+        if (section != null) entity.setSection(section);
+        if (subsection != null) entity.setSubsection(subsection);
+
+        return genreRepository.save(entity);
+    }
+
+    public void delete(Long id) {
+        log.info("Deleting genre ID: {}", id);
+        genreRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)

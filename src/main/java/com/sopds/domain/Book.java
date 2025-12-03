@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "book")
+@Table(name = "opds_catalog_book")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,28 +19,56 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 500)
+    @Column(name = "filename", nullable = false, length = 256)
+    private String filename;
+
+    @Column(name = "path", nullable = false, length = 1000)
+    private String path;
+
+    @Column(name = "filesize", nullable = false)
+    @Builder.Default
+    private Integer filesize = 0;
+
+    @Column(name = "format", nullable = false, length = 8)
+    private String format;
+
+    @Column(name = "cat_type", nullable = false)
+    @Builder.Default
+    private Integer catType = 0;
+
+    @Column(name = "registerdate", nullable = false)
+    private LocalDateTime registerdate;
+
+    @Column(name = "docdate", length = 32)
+    private String docdate;
+
+    @Column(name = "lang", length = 16)
+    private String lang;
+
+    @Column(name = "title", nullable = false, length = 256)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "search_title", nullable = false, length = 256)
+    private String searchTitle;
+
+    @Column(name = "annotation", length = 10000)
     private String annotation;
 
-    @Column(length = 10)
-    private String language;
-
-    @Column(name = "pub_date", length = 50)
-    private String pubDate;
-
-    @Column(name = "file_hash", length = 64, unique = true)
-    private String fileHash;
-
-    @Column(nullable = false)
+    @Column(name = "lang_code", nullable = false)
     @Builder.Default
-    private Boolean available = true;
+    private Integer langCode = 9;
+
+    @Column(name = "avail", nullable = false)
+    @Builder.Default
+    private Integer avail = 0;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "catalog_id", nullable = false)
+    private Catalog catalog;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "book_author",
+            name = "opds_catalog_bauthor",
             joinColumns = @JoinColumn(name = "book_id"),
             inverseJoinColumns = @JoinColumn(name = "author_id")
     )
@@ -49,31 +77,30 @@ public class Book {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "book_genre",
+            name = "opds_catalog_bgenre",
             joinColumns = @JoinColumn(name = "book_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
     @Builder.Default
     private Set<Genre> genres = new HashSet<>();
 
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "opds_catalog_bseries",
+            joinColumns = @JoinColumn(name = "book_id"),
+            inverseJoinColumns = @JoinColumn(name = "ser_id")
+    )
     @Builder.Default
-    private Set<BookFile> bookFiles = new HashSet<>();
+    private Set<Series> series = new HashSet<>();
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    @OneToMany(mappedBy = "book", fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<BookSeries> bookSeries = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        if (registerdate == null) {
+            registerdate = LocalDateTime.now();
+        }
     }
 }

@@ -26,8 +26,8 @@ public class AuthorService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Author> getByName(String name) {
-        return authorRepository.findByName(name);
+    public Optional<Author> getByFullName(String fullName) {
+        return authorRepository.findByFullName(fullName);
     }
 
     @Transactional(readOnly = true)
@@ -42,33 +42,41 @@ public class AuthorService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Author> getAll(int page, int size) {
-        return authorRepository.findAllByOrderByNameAsc(PageRequest.of(page, size));
+    public List<Author> getByLangCode(Integer langCode) {
+        return authorRepository.findByLangCode(langCode);
     }
 
-    public Author getOrCreate(String name, String sortName, String lang) {
-        return authorRepository.findByName(name)
+    @Transactional(readOnly = true)
+    public Page<Author> getAll(int page, int size) {
+        return authorRepository.findAllByOrderByFullNameAsc(PageRequest.of(page, size));
+    }
+
+    public Author getOrCreate(String fullName, Integer langCode) {
+        return authorRepository.findByFullName(fullName)
                 .orElseGet(() -> {
-                    log.info("Creating author: {}", name);
+                    log.info("Creating author: {}", fullName);
                     Author author = Author.builder()
-                            .name(name)
-                            .sortName(sortName != null ? sortName : name)
-                            .lang(lang)
+                            .fullName(fullName)
+                            .searchFullName(fullName.toLowerCase())
+                            .langCode(langCode != null ? langCode : 9)
                             .build();
                     return authorRepository.save(author);
                 });
     }
 
-    public Author update(Long id, String name, String sortName, String biography, String lang) {
+    public Author update(Long id, String fullName, Integer langCode) {
         log.info("Updating author ID: {}", id);
 
         Author author = authorRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Author not found: " + id));
 
-        if (name != null) author.setName(name);
-        if (sortName != null) author.setSortName(sortName);
-        if (biography != null) author.setBiography(biography);
-        if (lang != null) author.setLang(lang);
+        if (fullName != null) {
+            author.setFullName(fullName);
+            author.setSearchFullName(fullName.toLowerCase());
+        }
+        if (langCode != null) {
+            author.setLangCode(langCode);
+        }
 
         return authorRepository.save(author);
     }
