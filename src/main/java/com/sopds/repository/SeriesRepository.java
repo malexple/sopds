@@ -16,11 +16,29 @@ public interface SeriesRepository extends JpaRepository<Series, Long> {
 
     Optional<Series> findBySer(String ser);
 
-    @Query("SELECT s FROM Series s WHERE LOWER(s.searchSer) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY s.ser")
-    List<Series> searchBySer(@Param("query") String query);
+    // Поиск по названию (contains)
+    @Query("SELECT s FROM Series s WHERE UPPER(s.searchSer) LIKE UPPER(CONCAT('%', :term, '%')) ORDER BY s.searchSer")
+    Page<Series> searchByNameContains(@Param("term") String term, Pageable pageable);
 
-    @Query("SELECT s FROM Series s WHERE s.langCode = :langCode ORDER BY s.ser")
-    List<Series> findByLangCode(@Param("langCode") Integer langCode);
+    // Поиск по названию (startsWith)
+    @Query("SELECT s FROM Series s WHERE UPPER(s.searchSer) LIKE UPPER(CONCAT(:term, '%')) ORDER BY s.searchSer")
+    Page<Series> searchByNameStartsWith(@Param("term") String term, Pageable pageable);
 
-    Page<Series> findAllByOrderBySerAsc(Pageable pageable);
+    // Поиск по точному совпадению
+    @Query("SELECT s FROM Series s WHERE UPPER(s.searchSer) = UPPER(:term) ORDER BY s.searchSer")
+    Page<Series> searchByNameExact(@Param("term") String term, Pageable pageable);
+
+    // Все серии с пагинацией
+    Page<Series> findAllByOrderBySearchSer(Pageable pageable);
+
+    // Группировка по первым символам
+    @Query(value = """
+        SELECT SUBSTRING(search_ser, 1, :length) as id, COUNT(*) as cnt 
+        FROM opds_catalog_series 
+        WHERE (:langCode = 0 OR lang_code = :langCode) 
+          AND search_ser LIKE :chars || '%'
+        GROUP BY SUBSTRING(search_ser, 1, :length) 
+        ORDER BY id
+        """, nativeQuery = true)
+    List<Object[]> getSeriesPrefixes(@Param("length") int length, @Param("langCode") int langCode, @Param("chars") String chars);
 }

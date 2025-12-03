@@ -14,12 +14,29 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
 
     Optional<Genre> findByGenre(String genre);
 
-    @Query("SELECT DISTINCT g.section FROM Genre g ORDER BY g.section")
-    List<String> findAllSections();
+    // Секции жанров с количеством книг
+    @Query(value = """
+        SELECT g.section, MIN(g.id) as section_id, COUNT(DISTINCT bg.book_id) as num_book
+        FROM opds_catalog_genre g
+        LEFT JOIN opds_catalog_bgenre bg ON g.id = bg.genre_id
+        GROUP BY g.section
+        HAVING COUNT(DISTINCT bg.book_id) > 0
+        ORDER BY g.section
+        """, nativeQuery = true)
+    List<Object[]> getGenreSections();
 
-    @Query("SELECT g FROM Genre g WHERE g.section = :section ORDER BY g.subsection")
-    List<Genre> findBySection(@Param("section") String section);
+    // Подсекции жанров для конкретной секции
+    @Query(value = """
+        SELECT g.id, g.genre, g.section, g.subsection, COUNT(DISTINCT bg.book_id) as num_book
+        FROM opds_catalog_genre g
+        LEFT JOIN opds_catalog_bgenre bg ON g.id = bg.genre_id
+        WHERE g.section = :section
+        GROUP BY g.id, g.genre, g.section, g.subsection
+        HAVING COUNT(DISTINCT bg.book_id) > 0
+        ORDER BY g.subsection
+        """, nativeQuery = true)
+    List<Object[]> getGenresBySection(@Param("section") String section);
 
-    @Query("SELECT g FROM Genre g JOIN g.books b WHERE b.id = :bookId")
-    List<Genre> findByBookId(@Param("bookId") Long bookId);
+    // Все жанры
+    List<Genre> findAllByOrderBySection();
 }

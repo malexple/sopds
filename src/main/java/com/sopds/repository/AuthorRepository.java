@@ -16,14 +16,29 @@ public interface AuthorRepository extends JpaRepository<Author, Long> {
 
     Optional<Author> findByFullName(String fullName);
 
-    @Query("SELECT a FROM Author a WHERE LOWER(a.searchFullName) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY a.fullName")
-    List<Author> searchByName(@Param("query") String query);
+    // Поиск по имени (contains)
+    @Query("SELECT a FROM Author a WHERE UPPER(a.searchFullName) LIKE UPPER(CONCAT('%', :term, '%')) ORDER BY a.searchFullName")
+    Page<Author> searchByNameContains(@Param("term") String term, Pageable pageable);
 
-    @Query("SELECT a FROM Author a WHERE a.langCode = :langCode ORDER BY a.fullName")
-    List<Author> findByLangCode(@Param("langCode") Integer langCode);
+    // Поиск по имени (startsWith)
+    @Query("SELECT a FROM Author a WHERE UPPER(a.searchFullName) LIKE UPPER(CONCAT(:term, '%')) ORDER BY a.searchFullName")
+    Page<Author> searchByNameStartsWith(@Param("term") String term, Pageable pageable);
 
-    @Query("SELECT a FROM Author a JOIN a.books b WHERE b.id = :bookId ORDER BY a.fullName")
-    List<Author> findByBookId(@Param("bookId") Long bookId);
+    // Поиск по точному совпадению
+    @Query("SELECT a FROM Author a WHERE UPPER(a.searchFullName) = UPPER(:term) ORDER BY a.searchFullName")
+    Page<Author> searchByNameExact(@Param("term") String term, Pageable pageable);
 
-    Page<Author> findAllByOrderByFullNameAsc(Pageable pageable);
+    // Все авторы с пагинацией
+    Page<Author> findAllByOrderBySearchFullName(Pageable pageable);
+
+    // Группировка по первым символам для алфавитного меню
+    @Query(value = """
+        SELECT SUBSTRING(search_full_name, 1, :length) as id, COUNT(*) as cnt 
+        FROM opds_catalog_author 
+        WHERE (:langCode = 0 OR lang_code = :langCode) 
+          AND search_full_name LIKE :chars || '%'
+        GROUP BY SUBSTRING(search_full_name, 1, :length) 
+        ORDER BY id
+        """, nativeQuery = true)
+    List<Object[]> getAuthorPrefixes(@Param("length") int length, @Param("langCode") int langCode, @Param("chars") String chars);
 }

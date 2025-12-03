@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{sopds_main :: *}"
-      th:with="content=~{::content}">
+      th:replace="~{sopds_main :: layout(~{::content})}">
 <body>
 <th:block th:fragment="content">
     <div class="row">
         <div class="small-12 medium-8 large-8 small-centered columns">
             <h3 style="text-align:center;">
-                Привет
-                <span th:if="${#ctx.authentication != null and #ctx.authentication.authenticated}" th:text="${#ctx.authentication.name}">User</span>
-                <span th:unless="${#ctx.authentication != null and #ctx.authentication.authenticated}">Гость</span>!
+                Добро пожаловать в Simple OPDS Catalog!
             </h3>
             <p style="text-align:justify;">
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simple OPDS Catalog - это бесплатная программа для Linux и Windows,

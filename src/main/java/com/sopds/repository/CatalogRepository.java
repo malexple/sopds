@@ -14,9 +14,15 @@ public interface CatalogRepository extends JpaRepository<Catalog, Long> {
 
     Optional<Catalog> findByPath(String path);
 
+    // Корневые каталоги
     @Query("SELECT c FROM Catalog c WHERE c.parent IS NULL ORDER BY c.catName")
     List<Catalog> findRootCatalogs();
 
+    // Дочерние каталоги
     @Query("SELECT c FROM Catalog c WHERE c.parent.id = :parentId ORDER BY c.catName")
     List<Catalog> findByParentId(@Param("parentId") Long parentId);
+
+    // Каталог по родителю null
+    @Query("SELECT c FROM Catalog c WHERE c.parent IS NULL")
+    Optional<Catalog> findRootCatalog();
 }

@@ -1,66 +1,48 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{sopds_main :: *}"
-      th:with="content=~{::content}">
+      th:replace="~{sopds_main :: layout(~{::content})}">
 <body>
 <th:block th:fragment="content">
-
-    <!-- Bookshelf clear button -->
-    <a th:if="${isbookshelf}" class="alert button small" data-open="ConfirmModal">Очистить книжную полку</a>
 
     <th:block th:each="b : ${books}">
         <div class="large-12 column">
             <b th:text="${b.title}">Title</b>
             <i style="font-size:80%;">Скачать: </i>
             <i><a th:href="@{/opds/download/{id}/{zip}(id=${b.id},zip=0)}"><span class="label small" th:text="${b.format}">fb2</span></a></i>&nbsp;
-            <th:block th:unless="${#lists.contains(nozip, b.format)}">
-                <i><a th:href="@{/opds/download/{id}/{zip}(id=${b.id},zip=1)}"><span class="label small" th:text="${b.format} + '+zip'">fb2+zip</span></a></i>&nbsp;
-            </th:block>
-            <th:block th:if="${b.format == 'fb2' and fb2toepub}">
-                <i><a th:href="@{/opds/convert/{id}/{format}(id=${b.id},format='epub')}"><span class="label small">epub</span></a></i>&nbsp;
-            </th:block>
-            <th:block th:if="${b.format == 'fb2' and fb2tomobi}">
-                <i><a th:href="@{/opds/convert/{id}/{format}(id=${b.id},format='mobi')}"><span class="label small">mobi</span></a></i>&nbsp;
-            </th:block>
-            <th:block th:if="${isbookshelf}">
-                &nbsp;&nbsp;<i><a href="#" th:onclick="'del_bsbook(' + ${b.id} + ',\'' + ${b.title} + '\');'"><span class="secondary label small">&nbsp;Удалить с полки&nbsp;</span></a></i>
-            </th:block>
         </div>
 
         <div class="large-12 column">
             <table><tr>
                 <td width="100px" style="padding:0rem 0rem;">
-                    <img th:src="@{/opds/cover/{id}(id=${b.id})}" type="image/jpeg" width="80px">
+                    <img th:src="@{/opds/cover/{id}(id=${b.id})}" type="image/jpeg" width="80px"
+                         onerror="this.style.display='none'">
                 </td>
                 <td style="font-size:80%; padding:1rem 1rem;">
-                    <b>Название:</b> <span th:text="${b.title}">Title</span><br>
+                    <b>Название:</b> <span th:text="${b.title}">Title</span><br/>
                     <th:block th:if="${b.authors != null and #lists.size(b.authors) > 0}">
                         <b>Авторы:</b>
                         <span th:each="a,iterStat : ${b.authors}">
                         <a th:href="@{/search/books(searchtype=a,searchterms=${a.id})}" th:text="${a.fullName}">Author</a>
                         <span th:unless="${iterStat.last}">,</span>
-                    </span><br>
+                    </span><br/>
                     </th:block>
                     <th:block th:if="${b.genres != null and #lists.size(b.genres) > 0}">
                         <b>Жанры:</b>
                         <span th:each="g,iterStat : ${b.genres}">
                         <a th:href="@{/search/books(searchtype=g,searchterms=${g.id})}" th:text="${g.subsection}">Genre</a>
                         <span th:unless="${iterStat.last}">,</span>
-                    </span><br>
+                    </span><br/>
                     </th:block>
                     <th:block th:if="${b.series != null and #lists.size(b.series) > 0}">
                         <b>Серия:</b>
                         <span th:each="s,iterStat : ${b.series}">
                         <a th:href="@{/search/books(searchtype=s,searchterms=${s.id})}" th:text="${s.ser}">Series</a>
                         <span th:unless="${iterStat.last}">,</span>
-                    </span><br>
+                    </span><br/>
                     </th:block>
-                    <b>Файл:</b> <span th:text="${b.path} + '/' + ${b.filename}">path/file.fb2</span><br>
-                    <b>Размер:</b> <span th:text="${b.filesize}">100</span>Кб.<br>
-                    <b>Дата изменения:</b> <span th:text="${b.docdate}">2024</span><br>
-                    <th:block th:if="${b.doubles != null and b.doubles > 0}">
-                        <b>Дубликаты:</b> <a th:href="@{/search/books(searchtype=d,searchterms=${b.id})}" th:text="${b.title} + ' (' + ${b.doubles} + 'шт.)'">Doubles</a><br>
-                    </th:block>
+                    <b>Файл:</b> <span th:text="${b.path} + '/' + ${b.filename}">path/file.fb2</span><br/>
+                    <b>Размер:</b> <span th:text="${b.filesize}">100</span>Кб.<br/>
+                    <b>Дата изменения:</b> <span th:text="${b.docdate}">2024</span><br/>
                 </td>
             </tr>
                 <tr>
@@ -71,8 +53,13 @@
         </div>
     </th:block>
 
+    <!-- Empty state -->
+    <div th:if="${#lists.isEmpty(books)}" class="callout">
+        <p>Книги не найдены</p>
+    </div>
+
     <!-- Pagination -->
-    <th:block th:replace="~{fragments/sopds_pagination :: pagination(${paginator}, '/search/books', 'searchtype=' + ${searchtype} + '&searchterms=' + ${searchterms})}"></th:block>
+    <div th:replace="~{fragments/sopds_pagination :: pagination(${paginator}, ${baseUrl ?: '/search/books'}, 'searchtype=' + ${searchtype} + '&amp;searchterms=' + ${searchterms})}"></div>
 
 </th:block>
 </body>

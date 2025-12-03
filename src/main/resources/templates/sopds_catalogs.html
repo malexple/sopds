@@ -1,21 +1,16 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{sopds_main :: *}"
-      th:with="content=~{::content}">
+      th:replace="~{sopds_main :: layout(~{::content})}">
 <body>
 <th:block th:fragment="content">
     <table>
         <tr th:each="b : ${items}">
             <!-- Catalog -->
             <th:block th:if="${b.isCatalog == 1}">
-                <td width="80px" style="padding:0rem 0rem;" th:if="${b.catType == 0}">
-                    <img th:src="@{/images/folder.png}" width="32px">
-                </td>
-                <td width="80px" style="padding:0rem 0rem;" th:if="${b.catType == 1 or b.catType == 3}">
-                    <img th:src="@{/images/zip.png}" width="32px">
-                </td>
-                <td width="80px" style="padding:0rem 0rem;" th:if="${b.catType == 2}">
-                    <img th:src="@{/images/inpx.png}" width="32px">
+                <td width="80px" style="padding:0rem 0rem;">
+                    <img th:if="${b.catType == 0}" th:src="@{/images/folder.png}" width="32px">
+                    <img th:if="${b.catType == 1 or b.catType == 3}" th:src="@{/images/zip.png}" width="32px">
+                    <img th:if="${b.catType == 2}" th:src="@{/images/inpx.png}" width="32px">
                 </td>
                 <td>
                     <a th:href="@{/catalog(cat=${b.id})}" th:text="${b.title}">Catalog Name</a>
@@ -29,22 +24,19 @@
                     <span class="success label" th:text="${b.format}">fb2</span>
                 </td>
                 <td>
-                    <a th:href="@{/search/books(searchtype=i,searchterms=${b.id})}">
-                        <span th:text="${b.title}">Book Title</span>
-                        <th:block th:if="${b.authors != null and #lists.size(b.authors) > 0}">
-                            (<span th:each="a,iterStat : ${b.authors}">
-                            <span th:text="${a.fullName}">Author</span>
-                            <span th:unless="${iterStat.last}">, </span>
-                        </span>)
-                        </th:block>
-                    </a>
+                    <a th:href="@{/search/books(searchtype=i,searchterms=${b.id})}" th:text="${b.title}">Book Title</a>
                 </td>
             </th:block>
         </tr>
     </table>
 
+    <!-- Empty state -->
+    <div th:if="${#lists.isEmpty(items)}" class="callout">
+        <p>Каталог пуст</p>
+    </div>
+
     <!-- Pagination -->
-    <th:block th:replace="~{fragments/sopds_pagination :: pagination(${paginator}, '/catalog', ${catId != null} ? 'cat=' + ${catId} : '')}"></th:block>
+    <div th:replace="~{fragments/sopds_pagination :: pagination(${paginator}, '/catalog', ${catId != null} ? 'cat=' + ${catId} : '')}"></div>
 
 </th:block>
 </body>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{sopds_main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <table>
+        <tr th:each="chars : ${items}">
+            <td>
+                <a th:if="${chars.cnt >= splititems}" th:href="@{/series(lang=${langCode},chars=${chars.id})}" th:text="${chars.id}">Prefix</a>
+                <a th:if="${chars.cnt < splititems}" th:href="@{/search/series(searchtype=b,searchterms=${chars.id})}" th:text="${chars.id}">Prefix</a>
+                <span style="font-size:80%" th:text="'Всего: ' + ${chars.cnt} + ' серий.'">Всего: 0 серий.</span>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Empty state -->
+    <div th:if="${#lists.isEmpty(items)}" class="callout">
+        <p>Серии не найдены</p>
+    </div>
+</th:block>
+</body>
+</html>

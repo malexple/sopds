@@ -12,11 +12,13 @@ INSERT INTO opds_catalog_catalog (cat_name, path, cat_type, cat_size) VALUES
 ON CONFLICT DO NOTHING;
 
 -- Начальные счётчики
-INSERT INTO opds_catalog_counter (name, value, update_time) VALUES
-('books', 0, NOW()),
-('authors', 0, NOW()),
-('catalogs', 0, NOW())
-ON CONFLICT DO NOTHING;
+INSERT INTO opds_catalog_counter (name, value) VALUES
+('books', 0),
+('authors', 0),
+('catalogs', 0),
+('genres', 0),
+('series', 0)
+ON CONFLICT (name) DO NOTHING;
 
 -- Начальные настройки
 INSERT INTO constance_config (key, value) VALUES

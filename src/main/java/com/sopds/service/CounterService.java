@@ -3,62 +3,59 @@ package com.sopds.service;
 import com.sopds.domain.Counter;
 import com.sopds.repository.CounterRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
-@Slf4j
 public class CounterService {
 
     private final CounterRepository counterRepository;
 
-    @Transactional(readOnly = true)
-    public Optional<Counter> get(String name) {
-        return counterRepository.findById(name);
-    }
-
-    @Transactional(readOnly = true)
-    public Integer getValue(String name) {
-        return counterRepository.findById(name)
+    public int get(String name) {
+        return counterRepository.findByName(name)
                 .map(Counter::getValue)
                 .orElse(0);
     }
 
-    public Counter set(String name, Integer value) {
-        log.debug("Setting counter {}: {}", name, value);
-
-        Counter counter = counterRepository.findById(name)
-                .orElse(Counter.builder().name(name).build());
-
+    @Transactional
+    public void set(String name, int value) {
+        Counter counter = counterRepository.findByName(name)
+                .orElseGet(() -> Counter.builder().name(name).build());
         counter.setValue(value);
-        counter.setUpdateTime(LocalDateTime.now());
-
-        return counterRepository.save(counter);
+        counterRepository.save(counter);
     }
 
-    public Counter increment(String name) {
-        Counter counter = counterRepository.findById(name)
-                .orElse(Counter.builder().name(name).value(0).build());
-
+    @Transactional
+    public void increment(String name) {
+        Counter counter = counterRepository.findByName(name)
+                .orElseGet(() -> Counter.builder().name(name).value(0).build());
         counter.setValue(counter.getValue() + 1);
-        counter.setUpdateTime(LocalDateTime.now());
-
-        return counterRepository.save(counter);
+        counterRepository.save(counter);
     }
 
-    public Counter decrement(String name) {
-        Counter counter = counterRepository.findById(name)
-                .orElse(Counter.builder().name(name).value(0).build());
+    public LocalDateTime getLastScanDate() {
+        return counterRepository.findByName("lastscan")
+                .map(c -> {
+                    try {
+                        return LocalDateTime.parse(String.valueOf(c.getValue()),
+                                DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+                    } catch (Exception e) {
+                        return null;
+                    }
+                })
+                .orElse(null);
+    }
 
-        counter.setValue(Math.max(0, counter.getValue() - 1));
-        counter.setUpdateTime(LocalDateTime.now());
-
-        return counterRepository.save(counter);
+    @Transactional
+    public void setLastScanDate(LocalDateTime dateTime) {
+        String value = dateTime.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        Counter counter = counterRepository.findByName("lastscan")
+                .orElseGet(() -> Counter.builder().name("lastscan").build());
+        counter.setValue(Integer.parseInt(value.substring(0, 8))); // Сохраняем только дату
+        counterRepository.save(counter);
     }
 }

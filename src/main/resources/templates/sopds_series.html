@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{sopds_main :: *}"
-      th:with="content=~{::content}">
+      th:replace="~{sopds_main :: layout(~{::content})}">
 <body>
 <th:block th:fragment="content">
     <table>
@@ -15,8 +14,13 @@
         </tr>
     </table>
 
+    <!-- Empty state -->
+    <div th:if="${#lists.isEmpty(series)}" class="callout">
+        <p>Серии не найдены</p>
+    </div>
+
     <!-- Pagination -->
-    <th:block th:replace="~{fragments/sopds_pagination :: pagination(${paginator}, '/search/series', 'searchtype=' + ${searchtype} + '&searchterms=' + ${searchterms})}"></th:block>
+    <div th:replace="~{fragments/sopds_pagination :: pagination(${paginator}, '/search/series', 'searchtype=' + ${searchtype} + '&amp;searchterms=' + ${searchterms})}"></div>
 
 </th:block>
 </body>

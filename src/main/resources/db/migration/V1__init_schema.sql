@@ -119,10 +119,10 @@ CREATE INDEX idx_bookshelf_user_id ON opds_catalog_bookshelf(user_id);
 CREATE INDEX idx_bookshelf_book_id ON opds_catalog_bookshelf(book_id);
 
 -- Counter
-CREATE TABLE opds_catalog_counter (
-    name VARCHAR(16) PRIMARY KEY,
-    value INTEGER NOT NULL DEFAULT 0,
-    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS opds_catalog_counter (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(32) NOT NULL UNIQUE,
+    value INTEGER NOT NULL DEFAULT 0
 );
 
 -- Auth User (Django compatible)

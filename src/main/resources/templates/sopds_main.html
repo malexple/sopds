@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<html xmlns:th="http://www.thymeleaf.org" lang="ru" th:fragment="layout(content)">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -11,54 +11,40 @@
 
 <body>
 <div class="row"><div class="large-12 column">
-    <th:block th:replace="~{fragments/sopds_top :: top}"></th:block>
+    <div th:replace="~{fragments/sopds_top :: top}"></div>
 </div></div>
 
 <div class="row"><div class="large-12 column">
-    <th:block th:replace="~{fragments/sopds_logo :: logo}"></th:block>
+    <div th:replace="~{fragments/sopds_logo :: logo}"></div>
 </div></div>
 
 <div class="row"><div class="large-12 column">
-    <th:block th:replace="~{fragments/sopds_menu :: menu}"></th:block>
+    <div th:replace="~{fragments/sopds_menu :: menu}"></div>
 </div></div>
 
 <div class="row"><div class="large-12 column">
-    <th:block th:replace="~{fragments/sopds_breadcrumbs :: breadcrumbs}"></th:block>
+    <div th:replace="~{fragments/sopds_breadcrumbs :: breadcrumbs}"></div>
 </div></div>
 
 <div class="row" th:if="${systemMessage != null}"><div class="large-12 column">
-    <th:block th:replace="~{fragments/sopds_messages :: messages}"></th:block>
+    <div th:replace="~{fragments/sopds_messages :: messages}"></div>
 </div></div>
 
 <!-- Content block -->
 <div class="row"><div class="large-12 column">
-    <th:block th:replace="${content}"></th:block>
+    <th:block th:insert="${content}"></th:block>
 </div></div>
 
 <div class="row"><div class="large-12 column">
-    <th:block th:replace="~{fragments/sopds_footer :: footer}"></th:block>
+    <div th:replace="~{fragments/sopds_footer :: footer}"></div>
 </div></div>
 
 <script th:src="@{/js/vendor/jquery.js}"></script>
 <script th:src="@{/js/vendor/foundation.min.js}"></script>
 
-<script th:inline="javascript">
+<script>
     $(document).foundation();
-    SetSearch();
-    Foundation.Abide.defaults.validators['check_search'] =
-        function($el,required,parent) {
-            if ($('#main_searchbox')[0].value.length < 3)
-                return false;
-            return true;
-        };
-    function logout(to_url) {
-        var out = window.location.href.replace(/:\/\//, '://log:out@');
-        jQuery.get(out).error(function() {
-            window.location = to_url;
-        });
-    }
 </script>
 
-<th:block th:replace="${blockJs} ?: ~{}"></th:block>
 </body>
 </html>
