@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="menu">
+    <div id="main_menu" th:unless="${alphabet}">
+        <ul class="menu sopdsmenu" style="font-size:100%;">
+            <li th:classappend="${current == 'catalog'} ? 'active'">
+                <a th:href="@{/catalog}">Каталоги</a>
+            </li>
+            <li th:classappend="${current == 'book'} ? 'active'">
+                <a th:href="@{/book(lang=0)}">Книги</a>
+            </li>
+            <li th:classappend="${current == 'author'} ? 'active'">
+                <a th:href="@{/author(lang=0)}">Авторы</a>
+            </li>
+            <li th:classappend="${current == 'genre'} ? 'active'">
+                <a th:href="@{/genre}">Жанры</a>
+            </li>
+            <li th:classappend="${current == 'series'} ? 'active'">
+                <a th:href="@{/series(lang=0)}">Серии</a>
+            </li>
+        </ul>
+    </div>
+
+    <div id="main_menu" th:if="${alphabet}">
+        <ul class="dropdown menu sopdsmenu" style="font-size:100%;" data-dropdown-menu data-close-on-click-inside="false">
+            <li th:classappend="${current == 'catalog'} ? 'active'">
+                <a th:href="@{/catalog}">Каталоги</a>
+            </li>
+            <li th:classappend="${current == 'book'} ? 'active'">
+                <a href="#">Книги</a>
+                <ul class="menu sopdsmenu">
+                    <li th:each="entry : ${langMenu}">
+                        <a th:href="@{/book(lang=${entry.key})}" th:text="${entry.value}">Lang</a>
+                    </li>
+                </ul>
+            </li>
+            <li th:classappend="${current == 'author'} ? 'active'">
+                <a href="#">Авторы</a>
+                <ul class="menu sopdsmenu">
+                    <li th:each="entry : ${langMenu}">
+                        <a th:href="@{/author(lang=${entry.key})}" th:text="${entry.value}">Lang</a>
+                    </li>
+                </ul>
+            </li>
+            <li th:classappend="${current == 'genre'} ? 'active'">
+                <a th:href="@{/genre}">Жанры</a>
+            </li>
+            <li th:classappend="${current == 'series'} ? 'active'">
+                <a href="#">Серии</a>
+                <ul class="menu sopdsmenu">
+                    <li th:each="entry : ${langMenu}">
+                        <a th:href="@{/series(lang=${entry.key})}" th:text="${entry.value}">Lang</a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</th:block>
+</body>
+</html>

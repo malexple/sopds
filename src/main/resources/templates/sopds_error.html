@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<div th:fragment="error">
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{sopds_main :: *}"
+      th:with="content=~{::content}">
+<body>
+<th:block th:fragment="content">
     <div th:if="${errormsg}" class="callout small alert">
         <p th:text="${errormsg}">Error message</p>
     </div>
-</div>
+</th:block>
+</body>
 </html>

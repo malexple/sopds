@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="top">
+    <div class="top-bar">
+        <div class="top-bar-title">
+        <span data-responsive-toggle="main_menu" data-hide-for="medium">
+            <button class="menu-icon" type="button" data-toggle></button>
+        </span>
+            <div class="title-bar-title">
+                <div class="show-for-small-only">SOPDS</div>
+                <div class="show-for-medium">SIMPLE OPDS CATALOG</div>
+            </div>
+        </div>
+
+        <div class="top-bar-right" th:if="${sopdsAuth}">
+            <ul class="menu" style="font-size:90%;">
+                <li th:if="${#ctx.authentication != null and #ctx.authentication.authenticated}">
+                    <a th:href="@{/logout}"><i class="fi-torsos"></i>Выход (<span th:text="${#ctx.authentication.name}">User</span>)</a>
+                </li>
+                <li th:if="${#ctx.authentication != null and #ctx.authentication.authenticated and isAdmin}">
+                    <a th:href="@{/admin}"><i class="fi-widget"></i>Настройки</a>
+                </li>
+                <li th:unless="${#ctx.authentication != null and #ctx.authentication.authenticated}">
+                    <a th:href="@{/login}"><i class="fi-torsos"></i>Вход</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

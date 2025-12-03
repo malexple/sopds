@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{sopds_main :: *}"
+      th:with="content=~{::content}">
+<body>
+<th:block th:fragment="content">
+    <table>
+        <tr th:each="b : ${items}">
+            <!-- Catalog -->
+            <th:block th:if="${b.isCatalog == 1}">
+                <td width="80px" style="padding:0rem 0rem;" th:if="${b.catType == 0}">
+                    <img th:src="@{/images/folder.png}" width="32px">
+                </td>
+                <td width="80px" style="padding:0rem 0rem;" th:if="${b.catType == 1 or b.catType == 3}">
+                    <img th:src="@{/images/zip.png}" width="32px">
+                </td>
+                <td width="80px" style="padding:0rem 0rem;" th:if="${b.catType == 2}">
+                    <img th:src="@{/images/inpx.png}" width="32px">
+                </td>
+                <td>
+                    <a th:href="@{/catalog(cat=${b.id})}" th:text="${b.title}">Catalog Name</a>
+                </td>
+            </th:block>
+
+            <!-- Book -->
+            <th:block th:if="${b.isCatalog == 0}">
+                <td width="80px" style="padding:0rem 0rem;">
+                    <img th:src="@{/images/text.png}" width="32px">
+                    <span class="success label" th:text="${b.format}">fb2</span>
+                </td>
+                <td>
+                    <a th:href="@{/search/books(searchtype=i,searchterms=${b.id})}">
+                        <span th:text="${b.title}">Book Title</span>
+                        <th:block th:if="${b.authors != null and #lists.size(b.authors) > 0}">
+                            (<span th:each="a,iterStat : ${b.authors}">
+                            <span th:text="${a.fullName}">Author</span>
+                            <span th:unless="${iterStat.last}">, </span>
+                        </span>)
+                        </th:block>
+                    </a>
+                </td>
+            </th:block>
+        </tr>
+    </table>
+
+    <!-- Pagination -->
+    <th:block th:replace="~{fragments/sopds_pagination :: pagination(${paginator}, '/catalog', ${catId != null} ? 'cat=' + ${catId} : '')}"></th:block>
+
+</th:block>
+</body>
+</html>

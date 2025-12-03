@@ -1,21 +1,25 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<div th:fragment="hello">
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{sopds_main :: *}"
+      th:with="content=~{::content}">
+<body>
+<th:block th:fragment="content">
     <div class="row">
         <div class="small-12 medium-8 large-8 small-centered columns">
             <h3 style="text-align:center;">
-                Hello
-                <span th:if="${user != null and user.authenticated}" th:text="${user.username} + '!'">User!</span>
-                <span th:if="${user == null or !user.authenticated}">Guest!</span>
-                <img th:if="${user != null and user.authenticated}" th:src="@{/images/homelib.jpg}">
-                <img th:if="${user == null or !user.authenticated}" th:src="@{/images/gastlib.jpg}">
+                Привет
+                <span th:if="${#ctx.authentication != null and #ctx.authentication.authenticated}" th:text="${#ctx.authentication.name}">User</span>
+                <span th:unless="${#ctx.authentication != null and #ctx.authentication.authenticated}">Гость</span>!
             </h3>
-            <div th:if="${user == null or !user.authenticated}">
-                <p style="text-align:justify;">
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simple OPDS Catalog - is a free program for Linux and Windows, which allows for the rapid creation of electronic OPDS-catalog books. OPDS (Open Publication Distribution System) directory allows you to access your library through the Internet with many devices for reading electronic books, tablets, smartphones, etc. More about the program can be found on the project website: <a href="http://www.sopds.ru/">www.sopds.ru</a>.
-                </p>
-            </div>
+            <p style="text-align:justify;">
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simple OPDS Catalog - это бесплатная программа для Linux и Windows,
+                которая позволяет быстро создать электронный OPDS-каталог книг. OPDS (Open Publication Distribution System)
+                каталог позволяет получить доступ к вашей библиотеке через Интернет с различных устройств для чтения
+                электронных книг, планшетов, смартфонов и т.д. Подробнее о программе можно узнать на сайте проекта:
+                <a href="http://www.sopds.ru/">www.sopds.ru</a>.
+            </p>
         </div>
     </div>
-</div>
+</th:block>
+</body>
 </html>

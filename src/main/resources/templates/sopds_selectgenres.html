@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{sopds_main :: *}"
+      th:with="content=~{::content}">
+<body>
+<th:block th:fragment="content">
+    <table>
+        <tr th:each="g : ${items}">
+            <td>
+                <th:block th:if="${parentId == null or parentId == 0}">
+                    <a th:href="@{/genre(section=${g.sectionId})}" th:text="${g.section}">Section</a>
+                </th:block>
+                <th:block th:if="${parentId != null and parentId > 0}">
+                    <a th:href="@{/search/books(searchtype=g,searchterms=${g.id})}" th:text="${g.subsection}">Subsection</a>
+                </th:block>
+                <span style="font-size:80%;" th:text="'Всего: ' + ${g.numBook} + ' книг.'">Всего: 0 книг.</span>
+            </td>
+        </tr>
+    </table>
+</th:block>
+</body>
+</html>

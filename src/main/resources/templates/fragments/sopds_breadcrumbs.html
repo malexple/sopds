@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="breadcrumbs">
+    <nav aria-label="You are here:" role="navigation">
+        <ul class="breadcrumbs">
+            <li th:each="b : ${breadcrumbs}" th:text="${b}">Item</li>
+
+            <th:block th:each="b : ${breadcrumbsCat}">
+                <li>
+                    <a th:if="${b[1] > 0}" th:href="@{/catalog(cat=${b[1]})}" th:text="${b[0]}">Cat</a>
+                    <a th:if="${b[1] == 0}" th:href="@{/catalog}" th:text="${b[0]}">Root</a>
+                    <span th:if="${b[1] < 0}" th:text="${b[0]}">Item</span>
+                </li>
+            </th:block>
+        </ul>
+    </nav>
+</th:block>
+</body>
+</html>

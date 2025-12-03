@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="pagination(paginator, baseUrl, params)">
+    <ul th:if="${paginator.numPages > 1}" class="pagination" role="navigation" aria-label="Pagination">
+        <li class="pagination-previous" th:classappend="${!paginator.hasPrevious} ? 'disabled'">
+            <a th:if="${paginator.hasPrevious}"
+               th:href="${baseUrl} + '?' + ${params} + '&page=' + ${paginator.previousPageNumber}"
+               aria-label="Previous page">Назад</a>
+            <span th:unless="${paginator.hasPrevious}">Назад</span>
+        </li>
+
+        <th:block th:each="pn : ${paginator.pageRange}">
+            <li th:if="${paginator.number == pn}" class="current" th:text="${pn}">1</li>
+            <li th:unless="${paginator.number == pn}">
+                <a th:href="${baseUrl} + '?' + ${params} + '&page=' + ${pn}"
+                   th:aria-label="'Page ' + ${pn}" th:text="${pn}">1</a>
+            </li>
+        </th:block>
+
+        <li class="pagination-next" th:classappend="${!paginator.hasNext} ? 'disabled'">
+            <a th:if="${paginator.hasNext}"
+               th:href="${baseUrl} + '?' + ${params} + '&page=' + ${paginator.nextPageNumber}"
+               aria-label="Next page">Вперёд</a>
+            <span th:unless="${paginator.hasNext}">Вперёд</span>
+        </li>
+    </ul>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{sopds_main :: *}"
+      th:with="content=~{::content}">
+<body>
+<th:block th:fragment="content">
+    <table>
+        <tr th:each="s : ${series}">
+            <td>
+                <a th:href="@{/search/books(searchtype=s,searchterms=${s.id})}">
+                    <b th:text="${s.ser}">Series Name</b>
+                </a>
+                <span style="font-size:80%;" th:text="'Всего: ' + ${s.bookCount} + ' книг.'">Всего: 0 книг.</span>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Pagination -->
+    <th:block th:replace="~{fragments/sopds_pagination :: pagination(${paginator}, '/search/series', 'searchtype=' + ${searchtype} + '&searchterms=' + ${searchterms})}"></th:block>
+
+</th:block>
+</body>
+</html>

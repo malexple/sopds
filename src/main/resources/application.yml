@@ -44,7 +44,7 @@ logging:
     org.hibernate.SQL: DEBUG
 
 sopds:
-  root-lib: D:/books
+  root-lib: d:\projects\java\sopds\books\
   book-extensions: fb2,epub,mobi,pdf,djvu,doc,docx,rtf,txt
   scan-on-startup: true
   max-items: 60

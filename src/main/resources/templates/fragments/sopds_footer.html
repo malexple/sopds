@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="footer">
+    <div class="row expanded callout secondary" style="margin:0; padding-top:0"
+         th:if="${!sopdsAuth or (sopdsAuth and #ctx.authentication != null and #ctx.authentication.authenticated)}">
+
+        <!-- Bookshelf -->
+        <div class="large-4 columns" style="margin-top:1rem;">
+            <h5><a th:href="@{/search/books(searchtype=u)}">КНИЖНАЯ ПОЛКА</a></h5>
+            <div th:if="${sopdsAuth}" class="row small-up-4">
+                <div class="column" th:each="b : ${bookshelf}">
+                <span data-tooltip aria-haspopup="true" class="has-tip" data-disable-hover="false" tabindex="1" th:title="${b.title}">
+                    <a th:href="@{/search/books(searchtype=i,searchterms=${b.bookId})}">
+                        <img class="thumbnail" th:src="@{/opds/cover/{id}(id=${b.bookId})}" type="image/jpeg" th:alt="${b.title}">
+                    </a>
+                </span>
+                </div>
+            </div>
+            <span th:unless="${sopdsAuth}">Книжная полка доступна только при включенной авторизации.</span>
+        </div>
+
+        <!-- Statistics -->
+        <div class="large-4 columns" style="margin-top:1rem;">
+            <h5>СТАТИСТИКА</h5>
+            <p style="font-size:90%;">
+                <b>В каталоге:</b>
+                <span class="label" th:text="${stats.allbooks}">0</span> книг,
+                <span class="label" th:text="${stats.allauthors}">0</span> авторов,
+                <span class="label" th:text="${stats.allgenres}">0</span> жанров и
+                <span class="label" th:text="${stats.allseries}">0</span> серий.
+            </p>
+            <p style="font-size:90%;">
+                <b>Последнее сканирование:</b>
+                <span class="label" th:text="${stats.lastscanDate != null} ? ${#temporals.format(stats.lastscanDate, 'dd.MM.yyyy HH:mm')} : 'Никогда'">Никогда</span>
+            </p>
+        </div>
+
+        <!-- Random Book -->
+        <div class="large-4 columns" style="padding:0; margin-top:1rem;">
+            <div class="large-12 columns">
+                <h5>СЛУЧАЙНАЯ КНИГА</h5>
+            </div>
+            <div class="large-12 columns clearfix" th:if="${randomBook != null}">
+                <img class="float-left" th:src="@{/opds/cover/{id}(id=${randomBook.id})}" type="image/jpeg" width="80px" style="padding:0.3rem;">
+                <p style="font-size:80%;line-height:1rem;margin-bottom:0.25rem; margin-top:0.25rem;">
+                    <b><a th:href="@{/search/books(searchtype=i,searchterms=${randomBook.id})}" th:text="${randomBook.title}">Title</a></b>
+                </p>
+                <div style="font-size:70%;text-align:justify;" th:text="${#strings.abbreviate(randomBook.annotation, 400)}">Annotation</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="large-12 columns sopdsmenu" style="margin:0;padding:0;">
+        <div class="medium-6 columns">
+            <ul class="menu show-for-medium">
+                <li class="menu-text" style="padding:0"><a href="https://github.com/mitshel/sopds"><i class="fi-social-github"></i>GitHub</a></li>
+            </ul>
+        </div>
+        <div class="medium-6 columns">
+            <ul class="menu align-right">
+                <li class="menu-text" style="padding:0"><a href="http://www.sopds.ru/" th:text="'SOPDS.RU v.' + ${sopdsVersion}">SOPDS.RU</a></li>
+            </ul>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>
