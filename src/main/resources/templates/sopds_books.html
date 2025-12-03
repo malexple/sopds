@@ -14,8 +14,11 @@
         <div class="large-12 column">
             <table><tr>
                 <td width="100px" style="padding:0rem 0rem;">
-                    <img th:src="@{/opds/cover/{id}(id=${b.id})}" type="image/jpeg" width="80px"
-                         onerror="this.style.display='none'">
+                    <img th:src="@{/opds/cover/{id}(id=${b.id})}"
+                         th:data-fallback="@{/images/nocover.jpg}"
+                         type="image/jpeg"
+                         width="80px"
+                         onerror="this.onerror=null; this.src=this.dataset.fallback;">
                 </td>
                 <td style="font-size:80%; padding:1rem 1rem;">
                     <b>Название:</b> <span th:text="${b.title}">Title</span><br/>
