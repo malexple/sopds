@@ -1,14 +1,15 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.2.0'
-    id 'io.spring.dependency-management' version '1.1.4'
+    id 'org.springframework.boot' version "${springBootVersion}"
+    id 'io.spring.dependency-management' version "${springDependencyManagementVersion}"
 }
 
-group = 'com.sopds'
-version = '1.0.0'
+group = projectGroup
+version = projectVersion
 
 java {
-    sourceCompatibility = '21'
+    sourceCompatibility = JavaVersion.toVersion(javaVersion)
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
 }
 
 configurations {
@@ -23,51 +24,58 @@ repositories {
 
 dependencies {
     // Spring Boot Starters
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-cache'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // PostgreSQL
-    runtimeOnly 'org.postgresql:postgresql'
+    // Database
+    implementation "org.postgresql:postgresql:${postgresqlVersion}"
 
-    // Flyway for database migrations
-    implementation 'org.flywaydb:flyway-core'
-//    implementation 'org.flywaydb:flyway-database-postgresql'
+    // Flyway
+    implementation "org.flywaydb:flyway-core:${flywayVersion}"
+    implementation "org.flywaydb:flyway-database-postgresql:${flywayVersion}"
 
     // Lombok
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
-    // Thymeleaf
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    // JSON & XML
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+    implementation "org.glassfish.jaxb:jaxb-runtime:${jaxbVersion}"
 
-    // XML Processing (for FB2 files)
-    implementation 'org.apache.commons:commons-compress:1.25.0'
-    implementation 'org.dom4j:dom4j:2.1.4'
+    // Files & Archives
+    implementation "commons-io:commons-io:${commonsIoVersion}"
+    implementation "org.apache.commons:commons-compress:${commonsCompressVersion}"
 
-    // Image processing (for covers)
-    implementation 'org.imgscalr:imgscalr-lib:4.2'
+    // Images
+    implementation "org.imgscalr:imgscalr-lib:${imgscalrVersion}"
 
-    // Scheduling
-    implementation 'org.springframework.boot:spring-boot-starter-quartz'
-
-    // MapStruct for DTO mapping
-    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-
-    // Password encoding
-    implementation 'org.springframework.security:spring-security-crypto'
+    // Utils
+    implementation "org.apache.commons:commons-lang3:${commonsLang3Version}"
+    implementation "com.google.guava:guava:${guavaVersion}"
 
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'com.h2database:h2'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
+    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+    testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
+    testImplementation "org.testcontainers:testcontainers:${testcontainersVersion}"
+    testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
+}
 
-    // Dev tools
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named('bootJar') {
+    mainClass = 'com.sopds.SopdsApplication'
 }

@@ -1,7 +1,15 @@
 spring:
   application:
-    name: sopds-catalog
-
+    name: sopds
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+    open-in-view: false
   datasource:
     url: jdbc:postgresql://localhost:5439/sopds2
     username: postgres
@@ -10,71 +18,32 @@ spring:
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-
-  jpa:
-    hibernate:
-      ddl-auto: validate  # Changed to validate since we're using Flyway
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        jdbc:
-          batch_size: 20
-        order_inserts: true
-        order_updates: true
-        generate_statistics: false
-    open-in-view: false
-
   flyway:
     enabled: true
-    baseline-on-migrate: true
-    baseline-version: 0
     locations: classpath:db/migration
+    baseline-on-migrate: true
     validate-on-migrate: true
-
-  servlet:
-    multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
-
-  cache:
-    type: simple
-    cache-names:
-      - books
-      - authors
-      - genres
-      - series
-
-# Swagger/OpenAPI configuration
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    operations-sorter: method
-    tags-sorter: alpha
-    try-it-out-enabled: true
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    encoding: UTF-8
+  security:
+    user:
+      name: admin
+      password: admin
 
 server:
   port: 8080
-  compression:
-    enabled: true
-    mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json,application/xml
 
-# Application specific configuration
+logging:
+  level:
+    root: INFO
+    com.sopds: DEBUG
+    org.flywaydb: DEBUG
+    org.hibernate.SQL: DEBUG
+
 sopds:
-  library:
-    root-path: books               # Path to books folder
-    scan-on-startup: true          # Scan on app start
-    scan-cron: "0 0 3 * * ?"      # Daily at 3 AM
-    supported-formats: fb2,epub,pdf,djvu,mobi
-    max-file-size-mb: 100          # Skip files larger than 100MB
-    scan-threads: 4                # Parallel processing threads
-
-  zip:
-    scan-enabled: true             # Scan inside ZIP archives
-    encoding: cp866                # ZIP filename encoding
+  root-lib: /path/to/books
+  temp-dir: /tmp/sopds
+  max-items: 60
