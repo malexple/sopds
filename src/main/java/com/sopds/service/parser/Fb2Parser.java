@@ -1,4 +1,4 @@
-package com.sopds.catalog.service.parser;
+package com.sopds.service.parser;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

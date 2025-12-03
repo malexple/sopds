@@ -1,6 +1,6 @@
-package com.sopds.catalog.service;
+package com.sopds.service;
 
-import com.sopds.catalog.config.ScannerConfiguration;
+import com.sopds.config.ScannerConfiguration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;

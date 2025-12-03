@@ -1,6 +1,6 @@
-package com.sopds.catalog.repository;
+package com.sopds.repository;
 
-import com.sopds.catalog.entity.Book;
+import com.sopds.entity.Book;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

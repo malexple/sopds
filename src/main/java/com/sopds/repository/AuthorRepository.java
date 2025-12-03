@@ -1,6 +1,6 @@
-package com.sopds.catalog.repository;
+package com.sopds.repository;
 
-import com.sopds.catalog.entity.Author;
+import com.sopds.entity.Author;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

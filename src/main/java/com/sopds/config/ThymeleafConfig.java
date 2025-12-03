@@ -1,4 +1,4 @@
-package com.sopds.catalog.config;
+package com.sopds.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.sopds.catalog.entity;
+package com.sopds.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

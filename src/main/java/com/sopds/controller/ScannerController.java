@@ -1,9 +1,8 @@
-package com.sopds.catalog.controller;
+package com.sopds.controller;
 
-import com.sopds.catalog.service.BookScannerService;
-import com.sopds.catalog.service.ScannerSchedulerService;
+import com.sopds.service.BookScannerService;
+import com.sopds.service.ScannerSchedulerService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

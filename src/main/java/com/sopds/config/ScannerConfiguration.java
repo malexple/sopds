@@ -1,4 +1,4 @@
-package com.sopds.catalog.config;
+package com.sopds.config;
 
 import lombok.Getter;
 import lombok.Setter;

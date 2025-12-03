@@ -1,6 +1,6 @@
-package com.sopds.catalog.repository;
+package com.sopds.repository;
 
-import com.sopds.catalog.entity.Series;
+import com.sopds.entity.Series;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
