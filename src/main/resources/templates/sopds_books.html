@@ -4,65 +4,68 @@
 <body>
 <th:block th:fragment="content">
 
-    <th:block th:each="b : ${books}">
-        <div class="large-12 column">
-            <b th:text="${b.title}">Title</b>
-            <i style="font-size:80%;">Скачать: </i>
-            <i><a th:href="@{/opds/download/{id}/{zip}(id=${b.id},zip=0)}"><span class="label small" th:text="${b.format}">fb2</span></a></i>&nbsp;
-        </div>
+    <!-- Debug: показать количество книг -->
+    <div class="callout primary">
+        <small>Найдено книг: <span th:text="${#lists.size(books)}">0</span></small>
+    </div>
 
-        <div class="large-12 column">
-            <table><tr>
-                <td width="100px" style="padding:0rem 0rem;">
-                    <img th:src="@{/opds/cover/{id}(id=${b.id})}"
-                         th:data-fallback="@{/images/nocover.jpg}"
-                         type="image/jpeg"
-                         width="80px"
-                         onerror="this.onerror=null; this.src=this.dataset.fallback;">
-                </td>
-                <td style="font-size:80%; padding:1rem 1rem;">
-                    <b>Название:</b> <span th:text="${b.title}">Title</span><br/>
-                    <th:block th:if="${b.authors != null and #lists.size(b.authors) > 0}">
-                        <b>Авторы:</b>
-                        <span th:each="a,iterStat : ${b.authors}">
-                        <a th:href="@{/search/books(searchtype=a,searchterms=${a.id})}" th:text="${a.fullName}">Author</a>
-                        <span th:unless="${iterStat.last}">,</span>
+    <!-- Список книг -->
+    <table class="books-table" style="width:100%;">
+        <tr th:each="b : ${books}" style="border-bottom: 1px solid #eee;">
+            <td width="100px" style="padding: 0.5rem; vertical-align: top;">
+                <img th:src="@{/opds/cover/{id}(id=${b.id})}"
+                     th:data-fallback="@{/images/nocover.jpg}"
+                     width="80px"
+                     onerror="this.onerror=null; this.src=this.dataset.fallback;"/>
+            </td>
+            <td style="padding: 0.5rem; vertical-align: top;">
+                <div>
+                    <b th:text="${b.title}">Title</b>
+                    <i style="font-size:80%;"> Скачать: </i>
+                    <a th:href="@{/opds/download/{id}/{zip}(id=${b.id},zip=0)}">
+                        <span class="label small" th:text="${b.format}">fb2</span>
+                    </a>
+                </div>
+                <div style="font-size:80%; margin-top:0.5rem;">
+                <span th:if="${b.authors != null and !b.authors.isEmpty()}">
+                    <b>Авторы:</b>
+                    <span th:each="a,iterStat : ${b.authors}">
+                        <a th:href="@{/search/books(searchtype=a,searchterms=${a.id})}" th:text="${a.fullName}">Author</a><span th:unless="${iterStat.last}">, </span>
                     </span><br/>
-                    </th:block>
-                    <th:block th:if="${b.genres != null and #lists.size(b.genres) > 0}">
-                        <b>Жанры:</b>
-                        <span th:each="g,iterStat : ${b.genres}">
-                        <a th:href="@{/search/books(searchtype=g,searchterms=${g.id})}" th:text="${g.subsection}">Genre</a>
-                        <span th:unless="${iterStat.last}">,</span>
+                </span>
+                    <span th:if="${b.genres != null and !b.genres.isEmpty()}">
+                    <b>Жанры:</b>
+                    <span th:each="g,iterStat : ${b.genres}">
+                        <a th:href="@{/search/books(searchtype=g,searchterms=${g.id})}" th:text="${g.subsection}">Genre</a><span th:unless="${iterStat.last}">, </span>
                     </span><br/>
-                    </th:block>
-                    <th:block th:if="${b.series != null and #lists.size(b.series) > 0}">
-                        <b>Серия:</b>
-                        <span th:each="s,iterStat : ${b.series}">
-                        <a th:href="@{/search/books(searchtype=s,searchterms=${s.id})}" th:text="${s.ser}">Series</a>
-                        <span th:unless="${iterStat.last}">,</span>
+                </span>
+                    <span th:if="${b.series != null and !b.series.isEmpty()}">
+                    <b>Серия:</b>
+                    <span th:each="s,iterStat : ${b.series}">
+                        <a th:href="@{/search/books(searchtype=s,searchterms=${s.id})}" th:text="${s.ser}">Series</a><span th:unless="${iterStat.last}">, </span>
                     </span><br/>
-                    </th:block>
-                    <b>Файл:</b> <span th:text="${b.path} + '/' + ${b.filename}">path/file.fb2</span><br/>
-                    <b>Размер:</b> <span th:text="${b.filesize}">100</span>Кб.<br/>
-                    <b>Дата изменения:</b> <span th:text="${b.docdate}">2024</span><br/>
-                </td>
-            </tr>
-                <tr>
-                    <td colspan="2">
-                        <p style="font-size:80%;" th:text="${b.annotation}">Annotation</p>
-                    </td>
-                </tr></table>
-        </div>
-    </th:block>
+                </span>
+                    <b>Файл:</b> <span th:text="${b.path + '/' + b.filename}">path/file.fb2</span><br/>
+                    <b>Размер:</b> <span th:text="${b.filesize != null ? b.filesize / 1000 : 0}">100</span> Кб.<br/>
+                    <b>Дата:</b> <span th:text="${b.docdate}">2024</span>
+                </div>
+                <div th:if="${b.annotation != null and !b.annotation.isEmpty()}"
+                     style="font-size:80%; margin-top:0.5rem; color:#666;"
+                     th:utext="${b.annotation}">
+                </div>
+            </td>
+        </tr>
+    </table>
 
     <!-- Empty state -->
-    <div th:if="${#lists.isEmpty(books)}" class="callout">
+    <div th:if="${#lists.isEmpty(books)}" class="callout warning">
         <p>Книги не найдены</p>
     </div>
 
     <!-- Pagination -->
-    <div th:replace="~{fragments/sopds_pagination :: pagination(${paginator}, ${baseUrl ?: '/search/books'}, 'searchtype=' + ${searchtype} + '&amp;searchterms=' + ${searchterms})}"></div>
+    <div th:if="${paginator != null and paginator.numPages > 1}"
+         th:replace="~{fragments/sopds_pagination :: pagination(${paginator}, '/search/books', 'searchtype=' + ${searchtype} + '&amp;searchterms=' + ${searchterms})}">
+    </div>
 
 </th:block>
 </body>

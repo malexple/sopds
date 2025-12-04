@@ -11,8 +11,10 @@ import com.sopds.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,15 +46,15 @@ public class WebController {
         return "sopds_hello";
     }
 
-    /**
-     * Поиск книг
-     */
     @GetMapping("/search/books")
+    @Transactional(readOnly = true)
     public String searchBooks(
             @RequestParam(defaultValue = "m") String searchtype,
             @RequestParam(defaultValue = "") String searchterms,
             @RequestParam(defaultValue = "1") int page,
             Model model) {
+
+        log.info("searchBooks: searchtype={}, searchterms='{}', page={}", searchtype, searchterms, page);
 
         page = Math.max(1, page);
         PageRequest pageRequest = PageRequest.of(page - 1, MAX_ITEMS);
@@ -62,66 +64,84 @@ public class WebController {
 
         switch (searchtype) {
             case "m" -> {
-                // Поиск по названию (contains)
                 booksPage = bookRepository.searchByTitleContains(searchterms, pageRequest);
                 breadcrumbs = List.of("Книги", "Поиск по названию", searchterms);
                 searchobject = "title";
             }
             case "b" -> {
-                // Поиск по названию (startsWith)
                 booksPage = bookRepository.searchByTitleStartsWith(searchterms, pageRequest);
                 breadcrumbs = List.of("Книги", "Поиск по названию", searchterms);
                 searchobject = "title";
             }
             case "a" -> {
-                // Поиск по автору
-                Long authorId = Long.parseLong(searchterms);
-                Author author = authorRepository.findById(authorId).orElse(null);
-                String authorName = author != null ? author.getFullName() : "";
-                booksPage = bookRepository.findByAuthorId(authorId, pageRequest);
-                breadcrumbs = List.of("Книги", "Поиск по автору", authorName);
+                try {
+                    Long authorId = Long.parseLong(searchterms);
+                    Author author = authorRepository.findById(authorId).orElse(null);
+                    String authorName = author != null ? author.getFullName() : "";
+                    booksPage = bookRepository.findByAuthorId(authorId, pageRequest);
+                    breadcrumbs = List.of("Книги", "Поиск по автору", authorName);
+                } catch (NumberFormatException e) {
+                    booksPage = Page.empty(pageRequest);
+                    breadcrumbs = List.of("Книги", "Поиск по автору");
+                }
                 searchobject = "author";
             }
             case "s" -> {
-                // Поиск по серии
-                Long seriesId = Long.parseLong(searchterms);
-                Series series = seriesRepository.findById(seriesId).orElse(null);
-                String seriesName = series != null ? series.getSer() : "";
-                booksPage = bookRepository.findBySeriesId(seriesId, pageRequest);
-                breadcrumbs = List.of("Книги", "Поиск по серии", seriesName);
+                try {
+                    Long seriesId = Long.parseLong(searchterms);
+                    Series series = seriesRepository.findById(seriesId).orElse(null);
+                    String seriesName = series != null ? series.getSer() : "";
+                    booksPage = bookRepository.findBySeriesId(seriesId, pageRequest);
+                    breadcrumbs = List.of("Книги", "Поиск по серии", seriesName);
+                } catch (NumberFormatException e) {
+                    booksPage = Page.empty(pageRequest);
+                    breadcrumbs = List.of("Книги", "Поиск по серии");
+                }
                 searchobject = "series";
             }
             case "g" -> {
-                // Поиск по жанру
-                Long genreId = Long.parseLong(searchterms);
-                Genre genre = genreRepository.findById(genreId).orElse(null);
-                booksPage = bookRepository.findByGenreId(genreId, pageRequest);
-                if (genre != null) {
-                    breadcrumbs = List.of("Книги", "Поиск по жанру", genre.getSection(), genre.getSubsection());
-                } else {
+                try {
+                    Long genreId = Long.parseLong(searchterms);
+                    Genre genre = genreRepository.findById(genreId).orElse(null);
+                    booksPage = bookRepository.findByGenreId(genreId, pageRequest);
+                    if (genre != null) {
+                        breadcrumbs = List.of("Книги", "Поиск по жанру", genre.getSection(), genre.getSubsection());
+                    } else {
+                        breadcrumbs = List.of("Книги", "Поиск по жанру");
+                    }
+                } catch (NumberFormatException e) {
+                    booksPage = Page.empty(pageRequest);
                     breadcrumbs = List.of("Книги", "Поиск по жанру");
                 }
                 searchobject = "genre";
             }
             case "i" -> {
-                // Поиск по ID книги
-                Long bookId = Long.parseLong(searchterms);
-                Book book = bookRepository.findById(bookId).orElse(null);
-                List<Book> bookList = book != null ? List.of(book) : List.of();
-                booksPage = new org.springframework.data.domain.PageImpl<>(bookList, pageRequest, bookList.size());
-                breadcrumbs = List.of("Книги", book != null ? book.getTitle() : "");
+                try {
+                    Long bookId = Long.parseLong(searchterms);
+                    Book book = bookRepository.findById(bookId).orElse(null);
+                    List<Book> bookList = book != null ? List.of(book) : List.of();
+                    booksPage = new PageImpl<>(bookList, pageRequest, bookList.size());
+                    breadcrumbs = List.of("Книги", book != null ? book.getTitle() : "");
+                } catch (NumberFormatException e) {
+                    booksPage = Page.empty(pageRequest);
+                    breadcrumbs = List.of("Книги");
+                }
                 searchobject = "title";
             }
             case "d" -> {
-                // Поиск дубликатов
-                Long bookId = Long.parseLong(searchterms);
-                Book book = bookRepository.findById(bookId).orElse(null);
-                if (book != null) {
-                    List<Long> authorIds = book.getAuthors().stream().map(Author::getId).toList();
-                    List<Book> doubles = bookRepository.findDoubles(book.getTitle(), authorIds, bookId);
-                    booksPage = new org.springframework.data.domain.PageImpl<>(doubles, pageRequest, doubles.size());
-                    breadcrumbs = List.of("Книги", "Дубликаты", book.getTitle());
-                } else {
+                try {
+                    Long bookId = Long.parseLong(searchterms);
+                    Book book = bookRepository.findById(bookId).orElse(null);
+                    if (book != null) {
+                        List<Long> authorIds = book.getAuthors().stream().map(Author::getId).toList();
+                        List<Book> doubles = authorIds.isEmpty() ? List.of() : bookRepository.findDoubles(book.getTitle(), authorIds, bookId);
+                        booksPage = new PageImpl<>(doubles, pageRequest, doubles.size());
+                        breadcrumbs = List.of("Книги", "Дубликаты", book.getTitle());
+                    } else {
+                        booksPage = Page.empty(pageRequest);
+                        breadcrumbs = List.of("Книги", "Дубликаты");
+                    }
+                } catch (NumberFormatException e) {
                     booksPage = Page.empty(pageRequest);
                     breadcrumbs = List.of("Книги", "Дубликаты");
                 }
@@ -133,29 +153,18 @@ public class WebController {
             }
         }
 
-        // Преобразуем книги в DTO с дополнительными данными
-        List<Map<String, Object>> books = new ArrayList<>();
-        for (Book book : booksPage.getContent()) {
-            Map<String, Object> bookMap = new HashMap<>();
-            bookMap.put("id", book.getId());
-            bookMap.put("title", book.getTitle());
-            bookMap.put("annotation", book.getAnnotation() != null ? book.getAnnotation().replaceAll("<[^>]*>", "") : "");
-            bookMap.put("filename", book.getFilename());
-            bookMap.put("path", book.getPath());
-            bookMap.put("format", book.getFormat());
-            bookMap.put("filesize", book.getFilesize() != null ? book.getFilesize() / 1000 : 0);
-            bookMap.put("docdate", book.getDocdate());
-            bookMap.put("langCode", book.getLangCode());
-            bookMap.put("authors", book.getAuthors());
-            bookMap.put("genres", book.getGenres());
-            bookMap.put("series", book.getSeries());
-            bookMap.put("doubles", 0); // TODO: подсчёт дубликатов
-            books.add(bookMap);
+        // Инициализируем lazy-коллекции в рамках транзакции
+        List<Book> books = booksPage.getContent();
+        for (Book book : books) {
+            // Просто обращаемся к коллекциям чтобы инициализировать их
+            if (book.getAuthors() != null) book.getAuthors().size();
+            if (book.getGenres() != null) book.getGenres().size();
+            if (book.getSeries() != null) book.getSeries().size();
         }
 
         PaginatorDto paginator = PaginatorDto.of(page, (int) booksPage.getTotalElements(), MAX_ITEMS, HALF_PAGES_LINKS);
 
-        model.addAttribute("books", books);
+        model.addAttribute("books", books);  // Передаём List<Book> напрямую!
         model.addAttribute("paginator", paginator);
         model.addAttribute("searchtype", searchtype);
         model.addAttribute("searchterms", searchterms);
