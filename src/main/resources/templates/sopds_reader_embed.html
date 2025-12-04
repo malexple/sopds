@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{sopds_main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+
+    <style>
+        .embed-container {
+            width: 100%;
+            height: 80vh;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+
+    <!-- Заголовок -->
+    <div class="row">
+        <div class="large-12 columns">
+            <h4 th:text="${book.title}">Название книги</h4>
+            <p style="font-size:80%; color:#666;">
+                Формат: <span th:text="${book.format}">pdf</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- PDF/DJVU Viewer -->
+    <div class="row">
+        <div class="large-12 columns">
+            <iframe th:src="@{/opds/download/{id}/0(id=${book.id})}"
+                    class="embed-container"
+                    title="Book Reader">
+            </iframe>
+        </div>
+    </div>
+
+    <!-- Кнопки -->
+    <div class="row">
+        <div class="large-12 columns" style="text-align: center; margin-top: 1rem;">
+            <a th:href="@{/opds/download/{id}/0(id=${book.id})}" class="button small secondary" target="_blank">
+                🔗 Открыть в новой вкладке
+            </a>
+            <a th:href="@{/search/books(searchtype=i,searchterms=${book.id})}" class="button small secondary">
+                ℹ️ О книге
+            </a>
+        </div>
+    </div>
+
+</th:block>
+</body>
+</html>

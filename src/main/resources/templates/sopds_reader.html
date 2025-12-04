@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{sopds_main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+
+    <style>
+        .reader-container {
+            background: #fafafa;
+            padding: 2rem;
+            border-radius: 5px;
+            min-height: 500px;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 18px;
+            line-height: 1.8;
+            color: #333;
+        }
+        .reader-container p {
+            text-indent: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        .reader-container h2 {
+            text-align: center;
+            margin: 1em 0;
+        }
+        .reader-container h3 {
+            margin: 1em 0 0.5em;
+        }
+        .reader-container blockquote {
+            border-left: 3px solid #ccc;
+            padding-left: 1em;
+            margin: 1em 0;
+            font-style: italic;
+            color: #666;
+        }
+        .reader-container .poem {
+            margin: 1em 2em;
+        }
+        .reader-container .verse {
+            text-indent: 0;
+            margin-bottom: 0.2em;
+        }
+        .reader-container .epigraph {
+            text-align: right;
+            font-size: 0.9em;
+            margin: 1em 0 2em;
+        }
+        .reader-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-top: 1px solid #eee;
+            margin-top: 1rem;
+        }
+    </style>
+
+    <!-- Ошибка -->
+    <div th:if="${error != null}" class="callout alert">
+        <p th:text="${error}">Error</p>
+    </div>
+
+    <!-- Заголовок -->
+    <div th:if="${book != null}" class="row">
+        <div class="large-12 columns">
+            <h4 th:text="${book.title}">Название книги</h4>
+            <p style="font-size:80%; color:#666;">
+            <span th:if="${book.authors != null and !book.authors.isEmpty()}">
+                <span th:each="a,iterStat : ${book.authors}">
+                    <span th:text="${a.fullName}">Автор</span><span th:unless="${iterStat.last}">, </span>
+                </span>
+                |
+            </span>
+                Формат: <span th:text="${book.format}">fb2</span>
+                <span th:if="${bookContent != null}">
+                | Страница <span th:text="${bookContent.currentPage}">1</span> из <span th:text="${bookContent.totalPages}">1</span>
+            </span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Навигация по главам (если есть) -->
+    <div th:if="${bookContent != null and bookContent.chapters != null and !bookContent.chapters.isEmpty()}" class="row">
+        <div class="large-12 columns">
+            <details>
+                <summary style="cursor:pointer;">📖 Главы (<span th:text="${#lists.size(bookContent.chapters)}">0</span>)</summary>
+                <div style="max-height: 300px; overflow-y: auto; margin-top: 0.5rem;">
+                    <a th:each="chapter, iterStat : ${bookContent.chapters}"
+                       th:href="@{/read/{id}(id=${book.id},page=${iterStat.index + 1})}"
+                       th:text="${chapter}"
+                       th:style="${iterStat.index + 1 == bookContent.currentPage} ? 'font-weight:bold;' : ''"
+                       style="display:block; padding: 0.3rem 0; border-bottom: 1px solid #eee;">
+                        Глава
+                    </a>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <!-- Контент книги -->
+    <div th:if="${bookContent != null}" class="row">
+        <div class="large-12 columns">
+            <div class="reader-container" th:utext="${bookContent.content}">
+                Содержимое книги
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div th:if="${bookContent != null}" class="row">
+        <div class="large-12 columns">
+            <div class="reader-nav">
+                <div>
+                    <a th:if="${bookContent.currentPage > 1}"
+                       th:href="@{/read/{id}(id=${book.id},page=${bookContent.currentPage - 1})}"
+                       class="button small">
+                        ← Назад
+                    </a>
+                    <span th:unless="${bookContent.currentPage > 1}" class="button small disabled">← Назад</span>
+                </div>
+
+                <div>
+                    <span th:text="${bookContent.currentPage} + ' / ' + ${bookContent.totalPages}">1 / 1</span>
+                </div>
+
+                <div>
+                    <a th:if="${bookContent.currentPage < bookContent.totalPages}"
+                       th:href="@{/read/{id}(id=${book.id},page=${bookContent.currentPage + 1})}"
+                       class="button small">
+                        Вперёд →
+                    </a>
+                    <span th:unless="${bookContent.currentPage < bookContent.totalPages}" class="button small disabled">Вперёд →</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Кнопки -->
+    <div th:if="${book != null}" class="row">
+        <div class="large-12 columns" style="text-align: center; margin-top: 1rem;">
+            <a th:href="@{/opds/download/{id}/0(id=${book.id})}" class="button small secondary">
+                📥 Скачать книгу
+            </a>
+            <a th:href="@{/search/books(searchtype=i,searchterms=${book.id})}" class="button small secondary">
+                ℹ️ О книге
+            </a>
+        </div>
+    </div>
+
+</th:block>
+</body>
+</html>

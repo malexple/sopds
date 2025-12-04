@@ -25,6 +25,13 @@
                     <a th:href="@{/opds/download/{id}/{zip}(id=${b.id},zip=0)}">
                         <span class="label small" th:text="${b.format}">fb2</span>
                     </a>
+
+                    <!-- Кнопка "Читать" для поддерживаемых форматов -->
+                    <th:block th:if="${#sets.contains({'txt','fb2','pdf','djvu','epub'}, b.format.toLowerCase())}">
+                        <a th:href="@{/read/{id}(id=${b.id})}" style="margin-left: 0.5rem;">
+                            <span class="label small success">📖 Читать</span>
+                        </a>
+                    </th:block>
                 </div>
                 <div style="font-size:80%; margin-top:0.5rem;">
                 <span th:if="${b.authors != null and !b.authors.isEmpty()}">
