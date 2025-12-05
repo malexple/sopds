@@ -21,14 +21,30 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health").permitAll()
+                        // Swagger / OpenAPI — ВСЕ пути
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs",
+                                "/api-docs/**",
+                                "/api-docs",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
+                        // Статика
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        // Публичные эндпоинты
+                        .requestMatchers("/", "/web", "/search/**", "/book", "/author", "/series", "/genre", "/catalog").permitAll()
                         .requestMatchers("/opds/**").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/read/**").permitAll()
+                        .requestMatchers("/api/**").permitAll()
+                        // Админка — только для аутентифицированных
+                        .requestMatchers("/admin/**").authenticated()
                         .anyRequest().permitAll()
                 )
-                .httpBasic(basic -> {})
-                .csrf(csrf -> csrf.disable());
+                .csrf(csrf -> csrf.disable())
+                .httpBasic(basic -> {});
 
         return http.build();
     }

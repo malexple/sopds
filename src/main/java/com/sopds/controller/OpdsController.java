@@ -3,6 +3,13 @@ package com.sopds.controller;
 import com.sopds.domain.Book;
 import com.sopds.repository.BookRepository;
 import com.sopds.service.BookFileService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
@@ -27,6 +34,7 @@ import java.util.zip.ZipOutputStream;
 @RequestMapping("/opds")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "OPDS", description = "OPDS API для скачивания книг и обложек")
 public class OpdsController {
 
     private final BookRepository bookRepository;
@@ -46,13 +54,22 @@ public class OpdsController {
             Map.entry("zip", "application/zip")
     );
 
-    /**
-     * Скачивание книги
-     */
+    @Operation(
+            summary = "Скачать книгу",
+            description = "Скачивает файл книги по ID. Параметр zip: 0 - оригинальный файл, 1 - в ZIP-архиве"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Файл книги",
+                    content = @Content(mediaType = "application/octet-stream")),
+            @ApiResponse(responseCode = "404", description = "Книга не найдена"),
+            @ApiResponse(responseCode = "500", description = "Ошибка чтения файла")
+    })
     @GetMapping("/download/{id}/{zip}")
     @Transactional(readOnly = true)
     public ResponseEntity<Resource> downloadBook(
+            @Parameter(description = "ID книги", example = "485")
             @PathVariable Long id,
+            @Parameter(description = "0 - оригинал, 1 - в ZIP", example = "0")
             @PathVariable int zip) {
 
         log.info("Download request: bookId={}, zip={}", id, zip);
@@ -94,11 +111,17 @@ public class OpdsController {
         }
     }
 
-    /**
-     * Заглушка для обложки
-     */
+    @Operation(summary = "Получить обложку книги", description = "Возвращает изображение обложки книги")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Изображение обложки",
+                    content = @Content(mediaType = "image/jpeg")),
+            @ApiResponse(responseCode = "404", description = "Обложка не найдена")
+    })
     @GetMapping("/cover/{id}")
-    public ResponseEntity<Resource> getBookCover(@PathVariable Long id) {
+    public ResponseEntity<Resource> getBookCover(
+            @Parameter(description = "ID книги", example = "485")
+            @PathVariable Long id) {
+        // TODO: извлечение обложки из FB2/EPUB
         return ResponseEntity.notFound().build();
     }
 
