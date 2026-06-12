@@ -27,7 +27,9 @@ public class GenericParser implements BookParser {
         // For formats without metadata, use filename as title
         String title = filename.replaceAll("\\.[^.]+$", "")
                 .replace("_", " ")
-                .replace("-", " ");
+                .replace("-", " ")
+                .replaceAll("^[\\s_-]+|[\\s_-]+$", "")
+                .replaceAll(" +", " ");
 
         return BookInfo.builder()
                 .title(title)
