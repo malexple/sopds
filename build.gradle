@@ -34,6 +34,16 @@ dependencies {
 
     // Database
     implementation "org.postgresql:postgresql:${postgresqlVersion}"
+    // Database — Postgres (опционально, профиль 'postgres')
+    runtimeOnly "org.postgresql:postgresql:${postgresqlVersion}"
+
+    // Database — SQLite (по умолчанию)
+    runtimeOnly "org.xerial:sqlite-jdbc:${sqliteVersion}"
+    implementation "org.hibernate.orm:hibernate-community-dialects:${hibernateCommunityDialectsVersion}"
+
+    // Flyway — core + postgres диалект (SQLite работает через core без отдельного модуля)
+    implementation "org.flywaydb:flyway-core:${flywayVersion}"
+    implementation "org.flywaydb:flyway-database-postgresql:${flywayVersion}"
 
     // Flyway
     implementation "org.flywaydb:flyway-core:${flywayVersion}"
