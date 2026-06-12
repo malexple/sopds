@@ -269,6 +269,7 @@ public class WebController {
      * Каталоги
      */
     @GetMapping("/catalog")
+    @Transactional(readOnly = true)
     public String catalogs(
             @RequestParam(required = false) Long cat,
             @RequestParam(defaultValue = "1") int page,
