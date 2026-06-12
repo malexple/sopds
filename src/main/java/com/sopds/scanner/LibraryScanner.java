@@ -43,8 +43,8 @@ public class LibraryScanner {
     private final AtomicInteger errors = new AtomicInteger(0);
 
     @Transactional
-    public ScanResult scan() {
-        String rootPath = properties.getRootLib();
+    public ScanResult scan(String rootPath) {
+//        String rootPath = properties.getRootLib();
         log.info("Starting library scan: {}", rootPath);
 
         booksAdded.set(0);

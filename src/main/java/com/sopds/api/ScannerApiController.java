@@ -1,7 +1,9 @@
 package com.sopds.api;
 
+import com.sopds.config.SopdsProperties;
 import com.sopds.scanner.LibraryScanner;
 import com.sopds.scanner.ScanResult;
+import com.sopds.service.ConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,7 +23,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Tag(name = "Scanner", description = "API для сканирования библиотеки книг")
 public class ScannerApiController {
 
+    private final ConfigService configService;
     private final LibraryScanner libraryScanner;
+    private final SopdsProperties properties;
 
     private final AtomicBoolean scanning = new AtomicBoolean(false);
     private volatile ScanResult lastResult = null;
@@ -48,8 +52,8 @@ public class ScannerApiController {
         Thread scanThread = new Thread(() -> {
             scanning.set(true);
             try {
-                lastResult = libraryScanner.scan();
-                log.info("Scan completed: {}", lastResult);
+                String rootPath = configService.getString("SOPDS_ROOT_LIB", properties.getRootLib());
+                lastResult = libraryScanner.scan(rootPath);
             } catch (Exception e) {
                 log.error("Scan failed", e);
                 lastResult = ScanResult.builder()
