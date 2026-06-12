@@ -17,15 +17,15 @@ public interface SeriesRepository extends JpaRepository<Series, Long> {
     Optional<Series> findBySer(String ser);
 
     // Поиск по названию (contains)
-    @Query("SELECT s FROM Series s WHERE UPPER(s.searchSer) LIKE UPPER(CONCAT('%', :term, '%')) ORDER BY s.searchSer")
+    @Query("SELECT s FROM Series s WHERE s.searchSer LIKE CONCAT('%', :term, '%') ORDER BY s.searchSer")
     Page<Series> searchByNameContains(@Param("term") String term, Pageable pageable);
 
     // Поиск по названию (startsWith)
-    @Query("SELECT s FROM Series s WHERE UPPER(s.searchSer) LIKE UPPER(CONCAT(:term, '%')) ORDER BY s.searchSer")
+    @Query("SELECT s FROM Series s WHERE s.searchSer LIKE CONCAT(:term, '%') ORDER BY s.searchSer")
     Page<Series> searchByNameStartsWith(@Param("term") String term, Pageable pageable);
 
     // Поиск по точному совпадению
-    @Query("SELECT s FROM Series s WHERE UPPER(s.searchSer) = UPPER(:term) ORDER BY s.searchSer")
+    @Query("SELECT s FROM Series s WHERE s.searchSer = :term ORDER BY s.searchSer")
     Page<Series> searchByNameExact(@Param("term") String term, Pageable pageable);
 
     // Все серии с пагинацией

@@ -225,6 +225,7 @@ public class WebController {
      * Поиск серий
      */
     @GetMapping("/search/series")
+    @Transactional(readOnly = true)
     public String searchSeries(
             @RequestParam(defaultValue = "m") String searchtype,
             @RequestParam(defaultValue = "") String searchterms,
@@ -236,10 +237,10 @@ public class WebController {
         Page<Series> seriesPage;
 
         switch (searchtype) {
-            case "m" -> seriesPage = seriesRepository.searchByNameContains(searchterms, pageRequest);
-            case "b" -> seriesPage = seriesRepository.searchByNameStartsWith(searchterms, pageRequest);
-            case "e" -> seriesPage = seriesRepository.searchByNameExact(searchterms, pageRequest);
-            default -> seriesPage = seriesRepository.searchByNameContains(searchterms, pageRequest);
+            case "m" -> seriesPage = seriesRepository.searchByNameContains(searchterms.toLowerCase(), pageRequest);
+            case "b" -> seriesPage = seriesRepository.searchByNameStartsWith(searchterms.toLowerCase(), pageRequest);
+            case "e" -> seriesPage = seriesRepository.searchByNameExact(searchterms.toLowerCase(), pageRequest);
+            default -> seriesPage = seriesRepository.searchByNameContains(searchterms.toLowerCase(), pageRequest);
         }
 
         // Преобразуем в DTO с подсчётом книг
