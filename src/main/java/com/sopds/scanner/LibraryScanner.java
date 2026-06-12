@@ -64,13 +64,9 @@ public class LibraryScanner {
         }
 
         try {
-            // Ensure root catalog exists
             Catalog rootCatalog = getOrCreateCatalog(root.getFileName().toString(), "/", null);
+            scanDirectory(root, root, rootCatalog);
 
-            // Scan directory tree
-            scanDirectory(root, rootCatalog);
-
-            // Update counters
             counterService.set("books", (int) bookRepository.countAvailable());
             counterService.set("authors", (int) authorRepository.count());
             counterService.set("catalogs", (int) catalogRepository.count());
@@ -97,7 +93,8 @@ public class LibraryScanner {
         }
     }
 
-    private void scanDirectory(Path directory, Catalog parentCatalog) throws IOException {
+    // Добавили параметр root — корень библиотеки для вычисления относительных путей
+    private void scanDirectory(Path root, Path directory, Catalog parentCatalog) throws IOException {
         List<String> extensions = properties.getBookExtensionsList();
 
         Files.walkFileTree(directory, new SimpleFileVisitor<>() {
@@ -115,13 +112,12 @@ public class LibraryScanner {
                 try {
                     String filename = file.getFileName().toString().toLowerCase();
 
-                    // Check if it's an archive
                     if (filename.endsWith(".zip")) {
                         processArchive(file, parentCatalog);
                     } else {
                         String extension = getExtension(filename);
                         if (extensions.contains(extension)) {
-                            processBookFile(file, parentCatalog, false, null);
+                            processBookFile(file, root, parentCatalog);
                         }
                     }
                 } catch (Exception e) {
@@ -154,8 +150,7 @@ public class LibraryScanner {
 
                 if (extensions.contains(extension)) {
                     try (InputStream is = zipFile.getInputStream(entry)) {
-                        processBookStream(is, entryName, entry.getSize(),
-                                archivePath.toString(), parentCatalog);
+                        processBookStream(is, entryName, entry.getSize(), archivePath.toString(), parentCatalog, entryName);
                     }
                 }
             }
@@ -165,13 +160,16 @@ public class LibraryScanner {
         }
     }
 
-    private void processBookFile(Path file, Catalog catalog, boolean inArchive, String archivePath) {
+    // Убрали inArchive/archivePath, добавили root для вычисления пути
+    private void processBookFile(Path file, Path root, Catalog catalog) {
         try {
             String filename = file.getFileName().toString();
             long filesize = Files.size(file);
+            // Относительный путь от rootLib: "rust/mybook.pdf"
+            String relativePath = root.relativize(file).toString().replace("\\", "/");
 
             try (InputStream is = Files.newInputStream(file)) {
-                processBookStream(is, filename, filesize, archivePath, catalog);
+                processBookStream(is, filename, filesize, null, catalog, relativePath);
             }
         } catch (Exception e) {
             log.error("Error processing book file: {}", file, e);
@@ -180,18 +178,17 @@ public class LibraryScanner {
     }
 
     private void processBookStream(InputStream inputStream, String filename, long filesize,
-                                   String archivePath, Catalog catalog) {
+                                   String archivePath, Catalog catalog, String relativePath) {
         String extension = getExtension(filename.toLowerCase());
-        String path = archivePath != null ? archivePath + ":" + filename : filename;
+        // Для архивов: "archive.zip:filename", для файлов: "rust/mybook.pdf"
+        String path = archivePath != null ? archivePath + ":" + filename : relativePath;
 
-        // Check if book already exists
         Optional<Book> existingBook = bookRepository.findByPath(path);
         if (existingBook.isPresent()) {
             booksSkipped.incrementAndGet();
             return;
         }
 
-        // Find appropriate parser
         BookParser parser = parsers.stream()
                 .filter(p -> p.supports(extension))
                 .findFirst()
@@ -204,11 +201,9 @@ public class LibraryScanner {
         }
 
         try {
-            // Parse book metadata
             byte[] content = inputStream.readAllBytes();
             BookInfo bookInfo = parser.parse(new ByteArrayInputStream(content), filename);
 
-            // Set file info
             bookInfo.setFilename(filename);
             bookInfo.setPath(path);
             bookInfo.setFormat(extension);
@@ -216,7 +211,6 @@ public class LibraryScanner {
             bookInfo.setInArchive(archivePath != null);
             bookInfo.setArchivePath(archivePath);
 
-            // Save to database
             saveBook(bookInfo, catalog);
             booksAdded.incrementAndGet();
 
@@ -228,40 +222,33 @@ public class LibraryScanner {
 
     @Transactional
     protected void saveBook(BookInfo bookInfo, Catalog catalog) {
-        // Get or create authors
         Set<Author> authors = new HashSet<>();
         for (AuthorInfo authorInfo : bookInfo.getAuthors()) {
-            Author author = getOrCreateAuthor(authorInfo);
-            authors.add(author);
+            authors.add(getOrCreateAuthor(authorInfo));
         }
 
-        // Get or create genres
         Set<Genre> genres = new HashSet<>();
         for (GenreInfo genreInfo : bookInfo.getGenres()) {
-            Genre genre = getOrCreateGenre(genreInfo);
-            genres.add(genre);
+            genres.add(getOrCreateGenre(genreInfo));
         }
 
-        // Get or create series
         Set<Series> seriesSet = new HashSet<>();
         for (SeriesInfo seriesInfo : bookInfo.getSeries()) {
-            Series series = getOrCreateSeries(seriesInfo);
-            seriesSet.add(series);
+            seriesSet.add(getOrCreateSeries(seriesInfo));
         }
 
-        // Create book
         Book book = Book.builder()
                 .filename(bookInfo.getFilename())
                 .path(bookInfo.getPath())
                 .filesize((int) bookInfo.getFilesize())
                 .format(bookInfo.getFormat())
-                .title(bookInfo.getTitle())
-                .searchTitle(bookInfo.getTitle().toLowerCase())
+                .title(bookInfo.getTitle().trim())
+                .searchTitle(bookInfo.getTitle().trim().toLowerCase())
                 .annotation(truncate(bookInfo.getAnnotation(), 10000))
                 .lang(bookInfo.getLanguage())
                 .docdate(bookInfo.getDocDate())
                 .langCode(getLangCode(bookInfo.getLanguage()))
-                .avail(2) // Available
+                .avail(2)
                 .catType(0)
                 .catalog(catalog)
                 .authors(authors)
@@ -277,52 +264,40 @@ public class LibraryScanner {
     private Author getOrCreateAuthor(AuthorInfo authorInfo) {
         String fullName = authorInfo.getFullName();
         return authorRepository.findByFullName(fullName)
-                .orElseGet(() -> {
-                    Author author = Author.builder()
-                            .fullName(fullName)
-                            .searchFullName(fullName.toLowerCase())
-                            .langCode(9)
-                            .build();
-                    return authorRepository.save(author);
-                });
+                .orElseGet(() -> authorRepository.save(Author.builder()
+                        .fullName(fullName)
+                        .searchFullName(fullName.toLowerCase())
+                        .langCode(9)
+                        .build()));
     }
 
     private Genre getOrCreateGenre(GenreInfo genreInfo) {
         return genreRepository.findByGenre(genreInfo.getGenre())
-                .orElseGet(() -> {
-                    Genre genre = Genre.builder()
-                            .genre(genreInfo.getGenre())
-                            .section(genreInfo.getSection() != null ? genreInfo.getSection() : "")
-                            .subsection(genreInfo.getSubsection() != null ? genreInfo.getSubsection() : "")
-                            .build();
-                    return genreRepository.save(genre);
-                });
+                .orElseGet(() -> genreRepository.save(Genre.builder()
+                        .genre(genreInfo.getGenre())
+                        .section(genreInfo.getSection() != null ? genreInfo.getSection() : "")
+                        .subsection(genreInfo.getSubsection() != null ? genreInfo.getSubsection() : "")
+                        .build()));
     }
 
     private Series getOrCreateSeries(SeriesInfo seriesInfo) {
         return seriesRepository.findBySer(seriesInfo.getName())
-                .orElseGet(() -> {
-                    Series series = Series.builder()
-                            .ser(seriesInfo.getName())
-                            .searchSer(seriesInfo.getName().toLowerCase())
-                            .langCode(9)
-                            .build();
-                    return seriesRepository.save(series);
-                });
+                .orElseGet(() -> seriesRepository.save(Series.builder()
+                        .ser(seriesInfo.getName())
+                        .searchSer(seriesInfo.getName().toLowerCase())
+                        .langCode(9)
+                        .build()));
     }
 
     private Catalog getOrCreateCatalog(String name, String path, Catalog parent) {
         return catalogRepository.findByPath(path)
-                .orElseGet(() -> {
-                    Catalog catalog = Catalog.builder()
-                            .catName(name)
-                            .path(path)
-                            .catType(0)
-                            .catSize(0)
-                            .parent(parent)
-                            .build();
-                    return catalogRepository.save(catalog);
-                });
+                .orElseGet(() -> catalogRepository.save(Catalog.builder()
+                        .catName(name)
+                        .path(path)
+                        .catType(0)
+                        .catSize(0)
+                        .parent(parent)
+                        .build()));
     }
 
     private String getExtension(String filename) {
@@ -351,7 +326,6 @@ public class LibraryScanner {
 
     private String truncate(String text, int maxLength) {
         if (text == null) return null;
-        if (text.length() <= maxLength) return text;
-        return text.substring(0, maxLength);
+        return text.length() <= maxLength ? text : text.substring(0, maxLength);
     }
 }

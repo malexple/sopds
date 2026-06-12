@@ -20,110 +20,46 @@ public class BookFileService {
 
     private final SopdsProperties properties;
 
-    /**
-     * Получает InputStream для чтения книги
-     */
     public InputStream getBookInputStream(Book book) throws IOException {
-        String filename = book.getFilename();
-
-        // Получаем rootLib из настроек
         String rootLib = properties.getRootLib();
         if (rootLib == null || rootLib.isEmpty()) {
             throw new IOException("rootLib is not configured in application.yml");
         }
 
         Path rootPath = Paths.get(rootLib).toAbsolutePath().normalize();
-        log.info("RootLib: {}, filename: {}", rootPath, filename);
-
-        // Получаем относительный путь из книги
         String bookPath = book.getPath();
-        String catalogPath = book.getCatalog() != null ? book.getCatalog().getPath() : null;
 
-        // Нормализуем пути (убираем ".")
-        bookPath = normalizePath(bookPath);
-        catalogPath = normalizePath(catalogPath);
-
-        log.debug("Normalized - catalogPath: '{}', bookPath: '{}'", catalogPath, bookPath);
-
-        // Формируем полный путь
-        Path basePath = rootPath;
-        if (!catalogPath.isEmpty()) {
-            basePath = basePath.resolve(catalogPath);
-        }
-        if (!bookPath.isEmpty() && !isArchiveOrFile(bookPath)) {
-            basePath = basePath.resolve(bookPath);
+        // Архив: path = "archive.zip:filename.fb2"
+        if (bookPath.contains(":")) {
+            int sep = bookPath.indexOf(':');
+            Path archivePath = rootPath.resolve(bookPath.substring(0, sep));
+            String entryName = bookPath.substring(sep + 1);
+            log.info("Reading from archive: {} -> {}", archivePath, entryName);
+            return getInputStreamFromZip(archivePath, entryName);
         }
 
-        log.info("Looking for book in: {}", basePath);
-
-        // 1. Прямой файл
-        Path directFile = basePath.resolve(filename);
-        log.debug("Try 1 - direct: {}", directFile);
-        if (Files.exists(directFile) && Files.isRegularFile(directFile)) {
-            log.info("Found: {}", directFile);
-            return Files.newInputStream(directFile);
+        // Обычный файл: path = "rust/mybook.pdf"
+        Path filePath = rootPath.resolve(bookPath);
+        log.info("Reading file: {}", filePath);
+        if (!Files.exists(filePath)) {
+            throw new FileNotFoundException("Book not found: " + filePath);
         }
-
-        // 2. ZIP с таким же именем
-        Path zipFile = basePath.resolve(filename + ".zip");
-        log.debug("Try 2 - zip: {}", zipFile);
-        if (Files.exists(zipFile)) {
-            log.info("Found ZIP: {}", zipFile);
-            return getInputStreamFromZip(zipFile, filename);
-        }
-
-        // 3. bookPath — это архив
-        if (!bookPath.isEmpty() && bookPath.toLowerCase().endsWith(".zip")) {
-            Path archivePath = rootPath.resolve(catalogPath.isEmpty() ? bookPath : catalogPath + "/" + bookPath);
-            log.debug("Try 3 - bookPath is archive: {}", archivePath);
-            if (Files.exists(archivePath)) {
-                log.info("Found archive: {}", archivePath);
-                return getInputStreamFromZip(archivePath, filename);
-            }
-        }
-
-        // 4. Поиск в rootPath напрямую (если path был ".")
-        Path rootDirect = rootPath.resolve(filename);
-        log.debug("Try 4 - root direct: {}", rootDirect);
-        if (Files.exists(rootDirect) && Files.isRegularFile(rootDirect)) {
-            log.info("Found in root: {}", rootDirect);
-            return Files.newInputStream(rootDirect);
-        }
-
-        // 5. ZIP в rootPath
-        Path rootZip = rootPath.resolve(filename + ".zip");
-        log.debug("Try 5 - root zip: {}", rootZip);
-        if (Files.exists(rootZip)) {
-            log.info("Found ZIP in root: {}", rootZip);
-            return getInputStreamFromZip(rootZip, filename);
-        }
-
-        throw new FileNotFoundException("Book not found: " + filename + "\nTried:\n" +
-                "  - " + directFile + "\n" +
-                "  - " + zipFile + "\n" +
-                "  - " + rootDirect + "\n" +
-                "  - " + rootZip);
+        return Files.newInputStream(filePath);
     }
 
-    private String normalizePath(String path) {
-        if (path == null || path.trim().isEmpty()) {
-            return "";
+    public byte[] getBookBytes(Book book) throws IOException {
+        try (InputStream is = getBookInputStream(book)) {
+            return is.readAllBytes();
         }
-        path = path.trim();
-        if (path.equals(".") || path.equals("./") || path.equals(".\\")) {
-            return "";
-        }
-        if (path.startsWith("./") || path.startsWith(".\\")) {
-            path = path.substring(2);
-        }
-        return path;
     }
 
-    private boolean isArchiveOrFile(String path) {
-        String lower = path.toLowerCase();
-        return lower.endsWith(".zip") || lower.endsWith(".rar") ||
-                lower.endsWith(".7z") || lower.endsWith(".fb2") ||
-                lower.endsWith(".epub") || lower.endsWith(".pdf");
+    public boolean bookFileExists(Book book) {
+        try {
+            getBookInputStream(book).close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private InputStream getInputStreamFromZip(Path zipPath, String entryName) throws IOException {
@@ -146,51 +82,26 @@ public class BookFileService {
     }
 
     private ZipEntry findZipEntry(ZipFile zipFile, String entryName) {
-        // Точное совпадение
         ZipEntry entry = zipFile.getEntry(entryName);
         if (entry != null) return entry;
 
-        // По имени файла
         var entries = zipFile.entries();
         while (entries.hasMoreElements()) {
             ZipEntry e = entries.nextElement();
             if (e.isDirectory()) continue;
-
             String name = e.getName();
             int slash = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
             String nameOnly = slash >= 0 ? name.substring(slash + 1) : name;
-
-            if (nameOnly.equalsIgnoreCase(entryName)) {
-                return e;
-            }
+            if (nameOnly.equalsIgnoreCase(entryName)) return e;
         }
 
-        // Единственный файл
         entries = zipFile.entries();
         ZipEntry single = null;
         int count = 0;
         while (entries.hasMoreElements()) {
             ZipEntry e = entries.nextElement();
-            if (!e.isDirectory()) {
-                single = e;
-                count++;
-            }
+            if (!e.isDirectory()) { single = e; count++; }
         }
         return count == 1 ? single : null;
-    }
-
-    public byte[] getBookBytes(Book book) throws IOException {
-        try (InputStream is = getBookInputStream(book)) {
-            return is.readAllBytes();
-        }
-    }
-
-    public boolean bookFileExists(Book book) {
-        try {
-            getBookInputStream(book).close();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }
