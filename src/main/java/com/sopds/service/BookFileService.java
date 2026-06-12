@@ -21,24 +21,21 @@ public class BookFileService {
     private final SopdsProperties properties;
 
     public InputStream getBookInputStream(Book book) throws IOException {
-        String rootLib = properties.getRootLib();
-        if (rootLib == null || rootLib.isEmpty()) {
-            throw new IOException("rootLib is not configured in application.yml");
-        }
-
-        Path rootPath = Paths.get(rootLib).toAbsolutePath().normalize();
+        Path rootPath = Paths.get(properties.getRootLib()).toAbsolutePath().normalize();
         String bookPath = book.getPath();
 
-        // Архив: path = "archive.zip:filename.fb2"
-        if (bookPath.contains(":")) {
-            int sep = bookPath.indexOf(':');
+        // Ищем ":" только начиная с позиции 2 — чтобы не спутать с диском "d:"
+        int sep = bookPath.indexOf(':', 2);
+
+        if (sep > 0) {
+            // Это архив: "subdir/archive.zip:book.fb2"
             Path archivePath = rootPath.resolve(bookPath.substring(0, sep));
             String entryName = bookPath.substring(sep + 1);
-            log.info("Reading from archive: {} -> {}", archivePath, entryName);
+            log.info("Reading from ZIP: {} -> {}", archivePath, entryName);
             return getInputStreamFromZip(archivePath, entryName);
         }
 
-        // Обычный файл: path = "rust/mybook.pdf"
+        // Обычный файл
         Path filePath = rootPath.resolve(bookPath);
         log.info("Reading file: {}", filePath);
         if (!Files.exists(filePath)) {

@@ -54,7 +54,7 @@ public class LibraryScanner {
 
         long startTime = System.currentTimeMillis();
 
-        Path root = Paths.get(rootPath);
+        Path root = Paths.get(rootPath).toAbsolutePath().normalize();
         if (!Files.exists(root)) {
             log.error("Root library path does not exist: {}", rootPath);
             return ScanResult.builder()
@@ -65,7 +65,7 @@ public class LibraryScanner {
 
         try {
             Catalog rootCatalog = getOrCreateCatalog(root.getFileName().toString(), "/", null);
-            scanDirectory(root, root, rootCatalog);
+            scanDirectory(root, rootCatalog);
 
             counterService.set("books", (int) bookRepository.countAvailable());
             counterService.set("authors", (int) authorRepository.count());
@@ -93,31 +93,46 @@ public class LibraryScanner {
         }
     }
 
-    // Добавили параметр root — корень библиотеки для вычисления относительных путей
-    private void scanDirectory(Path root, Path directory, Catalog parentCatalog) throws IOException {
+    private void scanDirectory(Path root, Catalog rootCatalog) throws IOException {
         List<String> extensions = properties.getBookExtensionsList();
 
-        Files.walkFileTree(directory, new SimpleFileVisitor<>() {
+        // Карта: абсолютный путь директории → её Catalog
+        Map<Path, Catalog> catalogMap = new HashMap<>();
+        catalogMap.put(root, rootCatalog);
+
+        Files.walkFileTree(root, new SimpleFileVisitor<>() {
+
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                if (!dir.equals(directory)) {
-                    String relativePath = directory.relativize(dir).toString().replace("\\", "/");
-                    getOrCreateCatalog(dir.getFileName().toString(), "/" + relativePath, parentCatalog);
-                }
+                if (dir.equals(root)) return FileVisitResult.CONTINUE;
+
+                // Относительный путь от root: всегда "/" как разделитель
+                String relPath = toRelativePath(root, dir);
+                String catalogPath = "/" + relPath;
+
+                // Родитель — каталог родительской директории
+                Catalog parentCatalog = catalogMap.getOrDefault(dir.getParent(), rootCatalog);
+                Catalog catalog = getOrCreateCatalog(dir.getFileName().toString(), catalogPath, parentCatalog);
+                catalogMap.put(dir, catalog);
+
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 try {
-                    String filename = file.getFileName().toString().toLowerCase();
+                    String filename = file.getFileName().toString();
+                    String filenameLower = filename.toLowerCase();
 
-                    if (filename.endsWith(".zip")) {
-                        processArchive(file, parentCatalog);
+                    // Каталог текущего файла
+                    Catalog fileCatalog = catalogMap.getOrDefault(file.getParent(), rootCatalog);
+
+                    if (filenameLower.endsWith(".zip")) {
+                        processArchive(file, root, fileCatalog);
                     } else {
-                        String extension = getExtension(filename);
+                        String extension = getExtension(filenameLower);
                         if (extensions.contains(extension)) {
-                            processBookFile(file, root, parentCatalog);
+                            processBookFile(file, root, fileCatalog);
                         }
                     }
                 } catch (Exception e) {
@@ -135,8 +150,10 @@ public class LibraryScanner {
         });
     }
 
-    private void processArchive(Path archivePath, Catalog parentCatalog) {
+    private void processArchive(Path archivePath, Path root, Catalog catalog) {
         List<String> extensions = properties.getBookExtensionsList();
+        // Относительный путь архива от root — кроссплатформенно
+        String relativeArchive = toRelativePath(root, archivePath);
 
         try (ZipFile zipFile = ZipFile.builder().setPath(archivePath).get()) {
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
@@ -150,7 +167,7 @@ public class LibraryScanner {
 
                 if (extensions.contains(extension)) {
                     try (InputStream is = zipFile.getInputStream(entry)) {
-                        processBookStream(is, entryName, entry.getSize(), archivePath.toString(), parentCatalog, entryName);
+                        processBookStream(is, entryName, entry.getSize(), relativeArchive, catalog);
                     }
                 }
             }
@@ -160,13 +177,11 @@ public class LibraryScanner {
         }
     }
 
-    // Убрали inArchive/archivePath, добавили root для вычисления пути
     private void processBookFile(Path file, Path root, Catalog catalog) {
         try {
             String filename = file.getFileName().toString();
             long filesize = Files.size(file);
-            // Относительный путь от rootLib: "rust/mybook.pdf"
-            String relativePath = root.relativize(file).toString().replace("\\", "/");
+            String relativePath = toRelativePath(root, file);
 
             try (InputStream is = Files.newInputStream(file)) {
                 processBookStream(is, filename, filesize, null, catalog, relativePath);
@@ -177,11 +192,17 @@ public class LibraryScanner {
         }
     }
 
+    // Для архивов: path = "subdir/archive.zip:book.fb2"
+    // Для файлов:  path = "subdir/book.pdf"
     private void processBookStream(InputStream inputStream, String filename, long filesize,
-                                   String archivePath, Catalog catalog, String relativePath) {
+                                   String archiveRelPath, Catalog catalog) {
+        processBookStream(inputStream, filename, filesize, archiveRelPath, catalog,
+                archiveRelPath != null ? archiveRelPath + ":" + filename : filename);
+    }
+
+    private void processBookStream(InputStream inputStream, String filename, long filesize,
+                                   String archiveRelPath, Catalog catalog, String path) {
         String extension = getExtension(filename.toLowerCase());
-        // Для архивов: "archive.zip:filename", для файлов: "rust/mybook.pdf"
-        String path = archivePath != null ? archivePath + ":" + filename : relativePath;
 
         Optional<Book> existingBook = bookRepository.findByPath(path);
         if (existingBook.isPresent()) {
@@ -208,8 +229,8 @@ public class LibraryScanner {
             bookInfo.setPath(path);
             bookInfo.setFormat(extension);
             bookInfo.setFilesize(filesize);
-            bookInfo.setInArchive(archivePath != null);
-            bookInfo.setArchivePath(archivePath);
+            bookInfo.setInArchive(archiveRelPath != null);
+            bookInfo.setArchivePath(archiveRelPath);
 
             saveBook(bookInfo, catalog);
             booksAdded.incrementAndGet();
@@ -218,6 +239,11 @@ public class LibraryScanner {
             log.error("Error parsing book: {}", filename, e);
             errors.incrementAndGet();
         }
+    }
+
+    // Всегда "/" как разделитель — работает на Windows, Linux, macOS
+    private String toRelativePath(Path root, Path target) {
+        return root.relativize(target).toString().replace("\\", "/");
     }
 
     @Transactional
@@ -258,7 +284,7 @@ public class LibraryScanner {
                 .build();
 
         bookRepository.save(book);
-        log.debug("Saved book: {}", book.getTitle());
+        log.debug("Saved book: {} -> catalog: {}", book.getTitle(), catalog.getCatName());
     }
 
     private Author getOrCreateAuthor(AuthorInfo authorInfo) {
