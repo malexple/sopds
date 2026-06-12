@@ -1,9 +1,12 @@
 name: Release Build
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag'
+        required: true
+        default: 'v0.2.1'
 
 jobs:
   build:
@@ -37,9 +40,7 @@ jobs:
           JAR=$(find build/libs -maxdepth 1 -type f -name "*.jar" ! -name "*plain*" | head -n 1)
           echo "jar=$JAR" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ${{ steps.jar.outputs.jar }}
+      - name: Upload jar to existing release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.inputs.tag }}" "${{ steps.jar.outputs.jar }}" --clobber
