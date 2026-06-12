@@ -32,11 +32,6 @@ spring:
     suffix: .html
     encoding: UTF-8
 
-  security:
-    user:
-      name: admin
-      password: admin
-
 server:
   port: 8080
 
@@ -60,8 +55,8 @@ logging:
     org.hibernate.SQL: DEBUG
 
 sopds:
-  root-lib: d:\books
+  root-lib: ${user.home}/sopds/books
   book-extensions: fb2,epub,mobi,pdf,djvu,doc,docx,rtf,txt
-  scan-on-startup: true
+  scan-on-startup: false
   max-items: 60
 

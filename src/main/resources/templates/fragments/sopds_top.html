@@ -19,7 +19,7 @@
                     <a th:href="@{/logout}"><i class="fi-torsos"></i>Выход (<span th:text="${#ctx.authentication.name}">User</span>)</a>
                 </li>
                 <li th:if="${#ctx.authentication != null and #ctx.authentication.authenticated and isAdmin}">
-                    <a th:href="@{/admin}"><i class="fi-widget"></i>Настройки</a>
+                    <a th:href="@{/admin/settings}"><i class="fi-widget"></i>Настройки</a>
                 </li>
                 <li th:unless="${#ctx.authentication != null and #ctx.authentication.authenticated}">
                     <a th:href="@{/login}"><i class="fi-torsos"></i>Вход</a>

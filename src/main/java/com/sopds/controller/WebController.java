@@ -17,7 +17,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.*;
 
@@ -541,5 +544,21 @@ public class WebController {
         model.addAttribute("current", "genre");
 
         return "sopds_selectgenres";
+    }
+
+    @ModelAttribute("isAdmin")
+    public boolean isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.isAuthenticated()
+                && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+    }
+
+    @GetMapping("/login")
+    public String login(Model model) {
+        model.addAttribute("breadcrumbs", List.of("Вход"));
+        model.addAttribute("current", "login");
+        return "sopds_login";
     }
 }

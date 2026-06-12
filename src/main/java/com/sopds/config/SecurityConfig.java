@@ -40,12 +40,21 @@ public class SecurityConfig {
                         .requestMatchers("/opds/**").permitAll()
                         .requestMatchers("/read/**").permitAll()
                         .requestMatchers("/api/**").permitAll()
-                        // Админка — только для аутентифицированных
-                        .requestMatchers("/admin/**").authenticated()
+                        .requestMatchers("/login").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
-                .csrf(csrf -> csrf.disable())
-                .httpBasic(basic -> {});
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/admin/settings", true)
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/")
+                        .permitAll()
+                )
+                .csrf(csrf -> csrf.disable());
 
         return http.build();
     }

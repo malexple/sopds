@@ -11,6 +11,8 @@ import com.sopds.service.CounterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -54,8 +56,7 @@ public class GlobalControllerAdvice {
 
     @ModelAttribute("sopdsAuth")
     public boolean sopdsAuth() {
-        // Пока отключена авторизация
-        return false;
+        return true;
     }
 
     @ModelAttribute("alphabet")
@@ -108,5 +109,15 @@ public class GlobalControllerAdvice {
         }
         int randomIndex = new Random().nextInt((int) count);
         return bookRepository.findRandomBook(randomIndex);
+    }
+
+
+    @ModelAttribute("isAdmin")
+    public boolean isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.isAuthenticated()
+                && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
     }
 }
