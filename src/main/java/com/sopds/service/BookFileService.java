@@ -6,7 +6,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,28 +22,35 @@ import java.util.zip.ZipFile;
 public class BookFileService {
 
     private final SopdsProperties properties;
+    private final ConfigService configService;
 
     public InputStream getBookInputStream(Book book) throws IOException {
-        Path rootPath = Paths.get(properties.getRootLib()).toAbsolutePath().normalize();
+        String effectiveRootLib = configService.getRootLib(properties.getRootLib());
+        Path rootPath = Paths.get(effectiveRootLib).toAbsolutePath().normalize();
         String bookPath = book.getPath();
 
-        // Ищем ":" только начиная с позиции 2 — чтобы не спутать с диском "d:"
         int sep = bookPath.indexOf(':', 2);
 
         if (sep > 0) {
-            // Это архив: "subdir/archive.zip:book.fb2"
-            Path archivePath = rootPath.resolve(bookPath.substring(0, sep));
+            Path archivePath = rootPath.resolve(bookPath.substring(0, sep)).normalize();
             String entryName = bookPath.substring(sep + 1);
+
             log.info("Reading from ZIP: {} -> {}", archivePath, entryName);
+
+            if (!Files.exists(archivePath)) {
+                throw new FileNotFoundException("Archive not found: " + archivePath);
+            }
+
             return getInputStreamFromZip(archivePath, entryName);
         }
 
-        // Обычный файл
-        Path filePath = rootPath.resolve(bookPath);
+        Path filePath = rootPath.resolve(bookPath).normalize();
         log.info("Reading file: {}", filePath);
+
         if (!Files.exists(filePath)) {
             throw new FileNotFoundException("Book not found: " + filePath);
         }
+
         return Files.newInputStream(filePath);
     }
 
@@ -51,8 +61,7 @@ public class BookFileService {
     }
 
     public boolean bookFileExists(Book book) {
-        try {
-            getBookInputStream(book).close();
+        try (InputStream ignored = getBookInputStream(book)) {
             return true;
         } catch (Exception e) {
             return false;
@@ -80,25 +89,38 @@ public class BookFileService {
 
     private ZipEntry findZipEntry(ZipFile zipFile, String entryName) {
         ZipEntry entry = zipFile.getEntry(entryName);
-        if (entry != null) return entry;
+        if (entry != null) {
+            return entry;
+        }
 
         var entries = zipFile.entries();
         while (entries.hasMoreElements()) {
             ZipEntry e = entries.nextElement();
-            if (e.isDirectory()) continue;
+            if (e.isDirectory()) {
+                continue;
+            }
+
             String name = e.getName();
             int slash = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
             String nameOnly = slash >= 0 ? name.substring(slash + 1) : name;
-            if (nameOnly.equalsIgnoreCase(entryName)) return e;
+
+            if (nameOnly.equalsIgnoreCase(entryName)) {
+                return e;
+            }
         }
 
         entries = zipFile.entries();
         ZipEntry single = null;
         int count = 0;
+
         while (entries.hasMoreElements()) {
             ZipEntry e = entries.nextElement();
-            if (!e.isDirectory()) { single = e; count++; }
+            if (!e.isDirectory()) {
+                single = e;
+                count++;
+            }
         }
+
         return count == 1 ? single : null;
     }
 }
