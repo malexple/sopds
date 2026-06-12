@@ -64,12 +64,12 @@ public class WebController {
 
         switch (searchtype) {
             case "m" -> {
-                booksPage = bookRepository.searchByTitleContains(searchterms, pageRequest);
+                booksPage = bookRepository.searchByTitleContains(searchterms.toLowerCase(), pageRequest);
                 breadcrumbs = List.of("Книги", "Поиск по названию", searchterms);
                 searchobject = "title";
             }
             case "b" -> {
-                booksPage = bookRepository.searchByTitleStartsWith(searchterms, pageRequest);
+                booksPage = bookRepository.searchByTitleStartsWith(searchterms.toLowerCase(), pageRequest);
                 breadcrumbs = List.of("Книги", "Поиск по названию", searchterms);
                 searchobject = "title";
             }

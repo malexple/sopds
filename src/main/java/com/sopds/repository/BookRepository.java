@@ -21,11 +21,11 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     long countAvailable();
 
     // Поиск по названию (contains)
-    @Query("SELECT b FROM Book b WHERE b.avail = 2 AND UPPER(b.searchTitle) LIKE UPPER(CONCAT('%', :term, '%')) ORDER BY b.searchTitle, b.docdate DESC")
+    @Query("SELECT b FROM Book b WHERE b.avail = 2 AND b.searchTitle LIKE CONCAT('%', :term, '%') ORDER BY b.searchTitle, b.docdate DESC")
     Page<Book> searchByTitleContains(@Param("term") String term, Pageable pageable);
 
     // Поиск по названию (startsWith)
-    @Query("SELECT b FROM Book b WHERE b.avail = 2 AND UPPER(b.searchTitle) LIKE UPPER(CONCAT(:term, '%')) ORDER BY b.searchTitle, b.docdate DESC")
+    @Query("SELECT b FROM Book b WHERE b.avail = 2 AND b.searchTitle LIKE CONCAT(:term, '%') ORDER BY b.searchTitle, b.docdate DESC")
     Page<Book> searchByTitleStartsWith(@Param("term") String term, Pageable pageable);
 
     // Книги автора
