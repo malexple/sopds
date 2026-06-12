@@ -17,15 +17,15 @@ public interface AuthorRepository extends JpaRepository<Author, Long> {
     Optional<Author> findByFullName(String fullName);
 
     // Поиск по имени (contains)
-    @Query("SELECT a FROM Author a WHERE UPPER(a.searchFullName) LIKE UPPER(CONCAT('%', :term, '%')) ORDER BY a.searchFullName")
+    @Query("SELECT a FROM Author a WHERE a.searchFullName LIKE CONCAT('%', :term, '%') ORDER BY a.searchFullName")
     Page<Author> searchByNameContains(@Param("term") String term, Pageable pageable);
 
     // Поиск по имени (startsWith)
-    @Query("SELECT a FROM Author a WHERE UPPER(a.searchFullName) LIKE UPPER(CONCAT(:term, '%')) ORDER BY a.searchFullName")
+    @Query("SELECT a FROM Author a WHERE a.searchFullName LIKE CONCAT(:term, '%') ORDER BY a.searchFullName")
     Page<Author> searchByNameStartsWith(@Param("term") String term, Pageable pageable);
 
     // Поиск по точному совпадению
-    @Query("SELECT a FROM Author a WHERE UPPER(a.searchFullName) = UPPER(:term) ORDER BY a.searchFullName")
+    @Query("SELECT a FROM Author a WHERE a.searchFullName = :term ORDER BY a.searchFullName")
     Page<Author> searchByNameExact(@Param("term") String term, Pageable pageable);
 
     // Все авторы с пагинацией

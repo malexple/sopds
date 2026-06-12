@@ -179,6 +179,7 @@ public class WebController {
      * Поиск авторов
      */
     @GetMapping("/search/authors")
+    @Transactional(readOnly = true)
     public String searchAuthors(
             @RequestParam(defaultValue = "m") String searchtype,
             @RequestParam(defaultValue = "") String searchterms,
@@ -190,10 +191,10 @@ public class WebController {
         Page<Author> authorsPage;
 
         switch (searchtype) {
-            case "m" -> authorsPage = authorRepository.searchByNameContains(searchterms, pageRequest);
-            case "b" -> authorsPage = authorRepository.searchByNameStartsWith(searchterms, pageRequest);
-            case "e" -> authorsPage = authorRepository.searchByNameExact(searchterms, pageRequest);
-            default -> authorsPage = authorRepository.searchByNameContains(searchterms, pageRequest);
+            case "m" -> authorsPage = authorRepository.searchByNameContains(searchterms.toLowerCase(), pageRequest);
+            case "b" -> authorsPage = authorRepository.searchByNameStartsWith(searchterms.toLowerCase(), pageRequest);
+            case "e" -> authorsPage = authorRepository.searchByNameExact(searchterms.toLowerCase(), pageRequest);
+            default -> authorsPage = authorRepository.searchByNameContains(searchterms.toLowerCase(), pageRequest);
         }
 
         // Преобразуем в DTO с подсчётом книг
