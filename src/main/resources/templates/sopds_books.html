@@ -10,7 +10,7 @@
     </div>
 
     <!-- Список книг -->
-    <table class="books-table" style="width:100%;">
+    <table class="books-table" style="width:100%; table-layout: fixed;">
         <tr th:each="b : ${books}" style="border-bottom: 1px solid #eee;">
             <td width="100px" style="padding: 0.5rem; vertical-align: top;">
                 <img th:src="@{/opds/cover/{id}(id=${b.id})}"
@@ -18,7 +18,7 @@
                      width="80px"
                      onerror="this.onerror=null; this.src=this.dataset.fallback;"/>
             </td>
-            <td style="padding: 0.5rem; vertical-align: top;">
+            <td style="padding: 0.5rem; vertical-align: top; word-break: break-all;">
                 <div>
                     <b th:text="${b.title}">Title</b>
                     <i style="font-size:80%;"> Скачать: </i>
@@ -52,7 +52,7 @@
                         <a th:href="@{/search/books(searchtype=s,searchterms=${s.id})}" th:text="${s.ser}">Series</a><span th:unless="${iterStat.last}">, </span>
                     </span><br/>
                 </span>
-                    <b>Файл:</b> <span th:text="${b.path + '/' + b.filename}">path/file.fb2</span><br/>
+                    <b>Файл:</b> <span th:text="${b.filename}">file.fb2</span><br/>
                     <b>Размер:</b> <span th:text="${b.filesize != null ? b.filesize / 1000 : 0}">100</span> Кб.<br/>
                     <b>Дата:</b> <span th:text="${b.docdate}">2024</span>
                 </div>

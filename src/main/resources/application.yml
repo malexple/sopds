@@ -1,42 +1,40 @@
 spring:
   application:
     name: sopds
+
+  datasource:
+    url: jdbc:sqlite:${user.home}/sopds/sopds.db
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 1
+      minimum-idle: 1
+      connection-timeout: 30000
+
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: com.sopds.config.SopdsQLiteDialect
         format_sql: true
-    show-sql: true
+    show-sql: false
     open-in-view: false
-  datasource:
-    url: jdbc:postgresql://localhost:5439/sopds2
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
+
   flyway:
     enabled: true
-    locations: classpath:db/migration
+    locations: classpath:db/migration/common,classpath:db/migration/sqlite
     baseline-on-migrate: true
     validate-on-migrate: true
+
   thymeleaf:
     cache: false
     prefix: classpath:/templates/
     suffix: .html
     encoding: UTF-8
-  security:
-    user:
-      name: admin
-      password: admin
 
 server:
   port: 8080
 
-# OpenAPI / Swagger
 springdoc:
   api-docs:
     enabled: true
@@ -57,8 +55,8 @@ logging:
     org.hibernate.SQL: DEBUG
 
 sopds:
-  root-lib: d:\projects\java\sopds\books\
+  root-lib: ${user.home}/sopds/books
   book-extensions: fb2,epub,mobi,pdf,djvu,doc,docx,rtf,txt
-  scan-on-startup: true
+  scan-on-startup: false
   max-items: 60
 

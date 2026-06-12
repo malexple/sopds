@@ -1,6 +1,7 @@
 package com.sopds.scanner;
 
 import com.sopds.config.SopdsProperties;
+import com.sopds.service.ConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class ScannerStartup {
 
     private final SopdsProperties properties;
+    private final ConfigService configService;
     private final LibraryScanner libraryScanner;
 
     @EventListener(ApplicationReadyEvent.class)
@@ -22,7 +24,9 @@ public class ScannerStartup {
 
             Thread scanThread = new Thread(() -> {
                 try {
-                    ScanResult result = libraryScanner.scan();
+                    String rootPath = configService.getString("SOPDS_ROOT_LIB", properties.getRootLib());
+                    ScanResult result = libraryScanner.scan(rootPath);
+
                     if (result.isSuccess()) {
                         log.info("Startup scan completed. Added: {}, Skipped: {}",
                                 result.getBooksAdded(), result.getBooksSkipped());

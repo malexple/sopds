@@ -6,7 +6,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,111 +22,50 @@ import java.util.zip.ZipFile;
 public class BookFileService {
 
     private final SopdsProperties properties;
+    private final ConfigService configService;
 
-    /**
-     * Получает InputStream для чтения книги
-     */
     public InputStream getBookInputStream(Book book) throws IOException {
-        String filename = book.getFilename();
-
-        // Получаем rootLib из настроек
-        String rootLib = properties.getRootLib();
-        if (rootLib == null || rootLib.isEmpty()) {
-            throw new IOException("rootLib is not configured in application.yml");
-        }
-
-        Path rootPath = Paths.get(rootLib).toAbsolutePath().normalize();
-        log.info("RootLib: {}, filename: {}", rootPath, filename);
-
-        // Получаем относительный путь из книги
+        String effectiveRootLib = configService.getRootLib(properties.getRootLib());
+        Path rootPath = Paths.get(effectiveRootLib).toAbsolutePath().normalize();
         String bookPath = book.getPath();
-        String catalogPath = book.getCatalog() != null ? book.getCatalog().getPath() : null;
 
-        // Нормализуем пути (убираем ".")
-        bookPath = normalizePath(bookPath);
-        catalogPath = normalizePath(catalogPath);
+        int sep = bookPath.indexOf(':', 2);
 
-        log.debug("Normalized - catalogPath: '{}', bookPath: '{}'", catalogPath, bookPath);
+        if (sep > 0) {
+            Path archivePath = rootPath.resolve(bookPath.substring(0, sep)).normalize();
+            String entryName = bookPath.substring(sep + 1);
 
-        // Формируем полный путь
-        Path basePath = rootPath;
-        if (!catalogPath.isEmpty()) {
-            basePath = basePath.resolve(catalogPath);
-        }
-        if (!bookPath.isEmpty() && !isArchiveOrFile(bookPath)) {
-            basePath = basePath.resolve(bookPath);
-        }
+            log.info("Reading from ZIP: {} -> {}", archivePath, entryName);
 
-        log.info("Looking for book in: {}", basePath);
-
-        // 1. Прямой файл
-        Path directFile = basePath.resolve(filename);
-        log.debug("Try 1 - direct: {}", directFile);
-        if (Files.exists(directFile) && Files.isRegularFile(directFile)) {
-            log.info("Found: {}", directFile);
-            return Files.newInputStream(directFile);
-        }
-
-        // 2. ZIP с таким же именем
-        Path zipFile = basePath.resolve(filename + ".zip");
-        log.debug("Try 2 - zip: {}", zipFile);
-        if (Files.exists(zipFile)) {
-            log.info("Found ZIP: {}", zipFile);
-            return getInputStreamFromZip(zipFile, filename);
-        }
-
-        // 3. bookPath — это архив
-        if (!bookPath.isEmpty() && bookPath.toLowerCase().endsWith(".zip")) {
-            Path archivePath = rootPath.resolve(catalogPath.isEmpty() ? bookPath : catalogPath + "/" + bookPath);
-            log.debug("Try 3 - bookPath is archive: {}", archivePath);
-            if (Files.exists(archivePath)) {
-                log.info("Found archive: {}", archivePath);
-                return getInputStreamFromZip(archivePath, filename);
+            if (!Files.exists(archivePath)) {
+                throw new FileNotFoundException("Archive not found: " + archivePath);
             }
+
+            return getInputStreamFromZip(archivePath, entryName);
         }
 
-        // 4. Поиск в rootPath напрямую (если path был ".")
-        Path rootDirect = rootPath.resolve(filename);
-        log.debug("Try 4 - root direct: {}", rootDirect);
-        if (Files.exists(rootDirect) && Files.isRegularFile(rootDirect)) {
-            log.info("Found in root: {}", rootDirect);
-            return Files.newInputStream(rootDirect);
+        Path filePath = rootPath.resolve(bookPath).normalize();
+        log.info("Reading file: {}", filePath);
+
+        if (!Files.exists(filePath)) {
+            throw new FileNotFoundException("Book not found: " + filePath);
         }
 
-        // 5. ZIP в rootPath
-        Path rootZip = rootPath.resolve(filename + ".zip");
-        log.debug("Try 5 - root zip: {}", rootZip);
-        if (Files.exists(rootZip)) {
-            log.info("Found ZIP in root: {}", rootZip);
-            return getInputStreamFromZip(rootZip, filename);
-        }
-
-        throw new FileNotFoundException("Book not found: " + filename + "\nTried:\n" +
-                "  - " + directFile + "\n" +
-                "  - " + zipFile + "\n" +
-                "  - " + rootDirect + "\n" +
-                "  - " + rootZip);
+        return Files.newInputStream(filePath);
     }
 
-    private String normalizePath(String path) {
-        if (path == null || path.trim().isEmpty()) {
-            return "";
+    public byte[] getBookBytes(Book book) throws IOException {
+        try (InputStream is = getBookInputStream(book)) {
+            return is.readAllBytes();
         }
-        path = path.trim();
-        if (path.equals(".") || path.equals("./") || path.equals(".\\")) {
-            return "";
-        }
-        if (path.startsWith("./") || path.startsWith(".\\")) {
-            path = path.substring(2);
-        }
-        return path;
     }
 
-    private boolean isArchiveOrFile(String path) {
-        String lower = path.toLowerCase();
-        return lower.endsWith(".zip") || lower.endsWith(".rar") ||
-                lower.endsWith(".7z") || lower.endsWith(".fb2") ||
-                lower.endsWith(".epub") || lower.endsWith(".pdf");
+    public boolean bookFileExists(Book book) {
+        try (InputStream ignored = getBookInputStream(book)) {
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private InputStream getInputStreamFromZip(Path zipPath, String entryName) throws IOException {
@@ -146,15 +88,17 @@ public class BookFileService {
     }
 
     private ZipEntry findZipEntry(ZipFile zipFile, String entryName) {
-        // Точное совпадение
         ZipEntry entry = zipFile.getEntry(entryName);
-        if (entry != null) return entry;
+        if (entry != null) {
+            return entry;
+        }
 
-        // По имени файла
         var entries = zipFile.entries();
         while (entries.hasMoreElements()) {
             ZipEntry e = entries.nextElement();
-            if (e.isDirectory()) continue;
+            if (e.isDirectory()) {
+                continue;
+            }
 
             String name = e.getName();
             int slash = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
@@ -165,10 +109,10 @@ public class BookFileService {
             }
         }
 
-        // Единственный файл
         entries = zipFile.entries();
         ZipEntry single = null;
         int count = 0;
+
         while (entries.hasMoreElements()) {
             ZipEntry e = entries.nextElement();
             if (!e.isDirectory()) {
@@ -176,21 +120,7 @@ public class BookFileService {
                 count++;
             }
         }
+
         return count == 1 ? single : null;
-    }
-
-    public byte[] getBookBytes(Book book) throws IOException {
-        try (InputStream is = getBookInputStream(book)) {
-            return is.readAllBytes();
-        }
-    }
-
-    public boolean bookFileExists(Book book) {
-        try {
-            getBookInputStream(book).close();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

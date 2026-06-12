@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{sopds_main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="panel">
+        <h3>Настройки библиотеки</h3>
+
+        <div th:if="${successMessage}" class="alert-box success radius">
+            <span th:text="${successMessage}"></span>
+        </div>
+
+        <div th:if="${errorMessage}" class="alert-box alert radius">
+            <span th:text="${errorMessage}"></span>
+        </div>
+
+        <!-- Форма сохранения пути -->
+        <form method="post" th:action="@{/admin/settings}">
+            <div class="row">
+                <div class="large-8 columns">
+                    <label>Папка с книгами
+                        <input type="text"
+                               name="rootLib"
+                               th:value="${rootLib}"
+                               placeholder="Например: D:\books или /home/user/books">
+                    </label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="large-8 columns">
+                    <button type="submit" class="button">Сохранить</button>
+                </div>
+            </div>
+        </form>
+
+        <hr>
+
+        <!-- Запуск сканирования -->
+        <h5>Сканирование библиотеки</h5>
+
+        <div th:if="${scanResult}" class="alert-box success radius">
+            Сканирование завершено:
+            добавлено — <strong th:text="${scanResult.booksAdded}">0</strong>,
+            обновлено — <strong th:text="${scanResult.booksUpdated}">0</strong>,
+            пропущено — <strong th:text="${scanResult.booksSkipped}">0</strong>,
+            ошибок — <strong th:text="${scanResult.errors}">0</strong>,
+            время — <strong th:text="${scanResult.durationMs}">0</strong> мс.
+        </div>
+
+        <div th:if="${scanError}" class="alert-box alert radius">
+            Ошибка сканирования: <span th:text="${scanError}"></span>
+        </div>
+
+        <form method="post" th:action="@{/admin/scan}">
+            <button type="submit" class="button secondary">
+                <i class="fi-loop"></i> Сканировать
+            </button>
+        </form>
+
+        <small class="text-muted" th:if="${rootLib != null and !#strings.isEmpty(rootLib)}">
+            Будет сканироваться: <code th:text="${rootLib}"></code>
+        </small>
+    </div>
+</th:block>
+</body>
+</html>

@@ -57,4 +57,13 @@ public class ConfigService {
         log.info("Deleting config: {}", key);
         configRepository.deleteByKey(key);
     }
+
+    @Transactional(readOnly = true)
+    public String getRootLib(String defaultValue) {
+        return getString("SOPDS_ROOT_LIB", defaultValue);
+    }
+
+    public void setRootLib(String value) {
+        setString("SOPDS_ROOT_LIB", value);
+    }
 }

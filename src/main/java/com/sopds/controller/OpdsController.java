@@ -102,7 +102,7 @@ public class OpdsController {
                             "inline; filename=\"" + filename + "\"; filename*=UTF-8''" + encodedFilename)
                     .header(HttpHeaders.CONTENT_TYPE, mimeType)
                     .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(content.length))
-                    .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
+                    .header(HttpHeaders.CACHE_CONTROL, "no-cache")
                     .body(new InputStreamResource(new ByteArrayInputStream(content)));
 
         } catch (Exception e) {

@@ -2,6 +2,7 @@ package com.sopds.repository;
 
 import com.sopds.domain.Book;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,11 +21,11 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     long countAvailable();
 
     // Поиск по названию (contains)
-    @Query("SELECT b FROM Book b WHERE b.avail = 2 AND UPPER(b.searchTitle) LIKE UPPER(CONCAT('%', :term, '%')) ORDER BY b.searchTitle, b.docdate DESC")
+    @Query("SELECT b FROM Book b WHERE b.avail = 2 AND b.searchTitle LIKE CONCAT('%', :term, '%') ORDER BY b.searchTitle, b.docdate DESC")
     Page<Book> searchByTitleContains(@Param("term") String term, Pageable pageable);
 
     // Поиск по названию (startsWith)
-    @Query("SELECT b FROM Book b WHERE b.avail = 2 AND UPPER(b.searchTitle) LIKE UPPER(CONCAT(:term, '%')) ORDER BY b.searchTitle, b.docdate DESC")
+    @Query("SELECT b FROM Book b WHERE b.avail = 2 AND b.searchTitle LIKE CONCAT(:term, '%') ORDER BY b.searchTitle, b.docdate DESC")
     Page<Book> searchByTitleStartsWith(@Param("term") String term, Pageable pageable);
 
     // Книги автора
@@ -43,9 +44,15 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     @Query("SELECT b FROM Book b WHERE b.avail = 2 AND b.catalog.id = :catalogId ORDER BY b.searchTitle")
     List<Book> findByCatalogId(@Param("catalogId") Long catalogId);
 
-    // Случайная книга
-    @Query(value = "SELECT * FROM opds_catalog_book WHERE avail = 2 OFFSET :offset LIMIT 1", nativeQuery = true)
-    Book findRandomBook(@Param("offset") int offset);
+    // Стало (JPQL + Pageable, работает везде):
+    @Query("SELECT b FROM Book b WHERE b.avail = 2")
+    default Book findRandomBook(int offset) {
+        return findRandomBookPage(PageRequest.of(offset, 1))
+                .stream().findFirst().orElse(null);
+    }
+
+    @Query("SELECT b FROM Book b WHERE b.avail = 2")
+    List<Book> findRandomBookPage(Pageable pageable);
 
     // Последние добавленные
     @Query("SELECT b FROM Book b WHERE b.avail = 2 ORDER BY b.registerdate DESC")
@@ -54,4 +61,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     // Поиск дубликатов
     @Query("SELECT b FROM Book b JOIN b.authors a WHERE b.avail = 2 AND b.title = :title AND a.id IN :authorIds AND b.id <> :excludeId ORDER BY b.docdate DESC")
     List<Book> findDoubles(@Param("title") String title, @Param("authorIds") List<Long> authorIds, @Param("excludeId") Long excludeId);
+
+    @Query("SELECT b FROM Book b WHERE b.avail = 2")
+    List<Book> findAvailableBooks(Pageable pageable);
 }

@@ -17,7 +17,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.*;
 
@@ -64,12 +67,12 @@ public class WebController {
 
         switch (searchtype) {
             case "m" -> {
-                booksPage = bookRepository.searchByTitleContains(searchterms, pageRequest);
+                booksPage = bookRepository.searchByTitleContains(searchterms.toLowerCase(), pageRequest);
                 breadcrumbs = List.of("Книги", "Поиск по названию", searchterms);
                 searchobject = "title";
             }
             case "b" -> {
-                booksPage = bookRepository.searchByTitleStartsWith(searchterms, pageRequest);
+                booksPage = bookRepository.searchByTitleStartsWith(searchterms.toLowerCase(), pageRequest);
                 breadcrumbs = List.of("Книги", "Поиск по названию", searchterms);
                 searchobject = "title";
             }
@@ -179,6 +182,7 @@ public class WebController {
      * Поиск авторов
      */
     @GetMapping("/search/authors")
+    @Transactional(readOnly = true)
     public String searchAuthors(
             @RequestParam(defaultValue = "m") String searchtype,
             @RequestParam(defaultValue = "") String searchterms,
@@ -190,10 +194,10 @@ public class WebController {
         Page<Author> authorsPage;
 
         switch (searchtype) {
-            case "m" -> authorsPage = authorRepository.searchByNameContains(searchterms, pageRequest);
-            case "b" -> authorsPage = authorRepository.searchByNameStartsWith(searchterms, pageRequest);
-            case "e" -> authorsPage = authorRepository.searchByNameExact(searchterms, pageRequest);
-            default -> authorsPage = authorRepository.searchByNameContains(searchterms, pageRequest);
+            case "m" -> authorsPage = authorRepository.searchByNameContains(searchterms.toLowerCase(), pageRequest);
+            case "b" -> authorsPage = authorRepository.searchByNameStartsWith(searchterms.toLowerCase(), pageRequest);
+            case "e" -> authorsPage = authorRepository.searchByNameExact(searchterms.toLowerCase(), pageRequest);
+            default -> authorsPage = authorRepository.searchByNameContains(searchterms.toLowerCase(), pageRequest);
         }
 
         // Преобразуем в DTO с подсчётом книг
@@ -224,6 +228,7 @@ public class WebController {
      * Поиск серий
      */
     @GetMapping("/search/series")
+    @Transactional(readOnly = true)
     public String searchSeries(
             @RequestParam(defaultValue = "m") String searchtype,
             @RequestParam(defaultValue = "") String searchterms,
@@ -235,10 +240,10 @@ public class WebController {
         Page<Series> seriesPage;
 
         switch (searchtype) {
-            case "m" -> seriesPage = seriesRepository.searchByNameContains(searchterms, pageRequest);
-            case "b" -> seriesPage = seriesRepository.searchByNameStartsWith(searchterms, pageRequest);
-            case "e" -> seriesPage = seriesRepository.searchByNameExact(searchterms, pageRequest);
-            default -> seriesPage = seriesRepository.searchByNameContains(searchterms, pageRequest);
+            case "m" -> seriesPage = seriesRepository.searchByNameContains(searchterms.toLowerCase(), pageRequest);
+            case "b" -> seriesPage = seriesRepository.searchByNameStartsWith(searchterms.toLowerCase(), pageRequest);
+            case "e" -> seriesPage = seriesRepository.searchByNameExact(searchterms.toLowerCase(), pageRequest);
+            default -> seriesPage = seriesRepository.searchByNameContains(searchterms.toLowerCase(), pageRequest);
         }
 
         // Преобразуем в DTO с подсчётом книг
@@ -269,6 +274,7 @@ public class WebController {
      * Каталоги
      */
     @GetMapping("/catalog")
+    @Transactional(readOnly = true)
     public String catalogs(
             @RequestParam(required = false) Long cat,
             @RequestParam(defaultValue = "1") int page,
@@ -538,5 +544,21 @@ public class WebController {
         model.addAttribute("current", "genre");
 
         return "sopds_selectgenres";
+    }
+
+    @ModelAttribute("isAdmin")
+    public boolean isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.isAuthenticated()
+                && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+    }
+
+    @GetMapping("/login")
+    public String login(Model model) {
+        model.addAttribute("breadcrumbs", List.of("Вход"));
+        model.addAttribute("current", "login");
+        return "sopds_login";
     }
 }
